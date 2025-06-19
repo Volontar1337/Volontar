@@ -1,0 +1,109 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+app-example
+
+# === .NET & Visual Studio (Backend) ===
+
+# .NET build artifacts
+bin/
+obj/
+[Bb]uild/
+[Bb]uild[Ll]og.*
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.vspscc
+*.vssscc
+*.pdb
+*.cache
+*.dbmdl
+*.log
+
+# NuGet
+*.nupkg
+*.snupkg
+*.nuspec
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Rider
+.idea/
+*.sln.iml
+
+# VS Code
+.vscode/
+
+# Test result files
+TestResult*/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+# Web-publikationsutdata
+publish/
+out/
+wwwroot/
+
+# Paket & tillfälliga config-filer
+packages/
+*.vspscc
+*.vssscc
+*.dotCover
+
+# Backup & temp
+*~ 
+*.tmp
+*.bak
+*.swp
+
+# OS-filer
+.DS_Store
+Thumbs.db
+
+# Dotnet tool restore
+.dotnet_toolstarget/
+
+# ASP.NET scaffolding
+ScaffoldingReadMe.txt
+
+# Azure
+local.settings.json
