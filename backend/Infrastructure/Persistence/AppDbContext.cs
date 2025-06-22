@@ -1,0 +1,35 @@
+using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace Infrastructure.Persistence;
+
+public class AppDbContext : DbContext
+{
+    public AppDbContext(DbContextOptions<AppDbContext> options)
+        : base(options)
+    {
+    }
+
+    public DbSet<User> Users => Set<User>();
+    public DbSet<VolunteerProfile> VolunteerProfiles => Set<VolunteerProfile>();
+    public DbSet<OrganizationProfile> OrganizationProfiles => Set<OrganizationProfile>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // One-to-one: User -> VolunteerProfile
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.VolunteerProfile)
+            .WithOne(v => v.User)
+            .HasForeignKey<VolunteerProfile>(v => v.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // One-to-one: User -> OrganizationProfile
+        modelBuilder.Entity<User>()
+            .HasOne(u => u.OrganizationProfile)
+            .WithOne(o => o.User)
+            .HasForeignKey<OrganizationProfile>(o => o.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}

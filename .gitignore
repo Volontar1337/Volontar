@@ -107,3 +107,9 @@ ScaffoldingReadMe.txt
 
 # Azure
 local.settings.json
+
+# Local settings
+appsettings.Development.json
+
+# Local database files
+*.db
