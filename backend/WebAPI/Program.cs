@@ -3,6 +3,7 @@ using Infrastructure.Services;
 using Application.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Domain.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +45,7 @@ if (env.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseMiddleware<WebAPI.Middleware.ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.MapControllers(); // Enable controller routes
 
