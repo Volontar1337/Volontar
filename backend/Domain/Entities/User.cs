@@ -1,10 +1,6 @@
-namespace Domain.Entities;
+using Domain.Enums;
 
-public enum UserRole
-{
-    Volunteer,
-    Organization
-}
+namespace Domain.Entities;
 
 public class User
 {

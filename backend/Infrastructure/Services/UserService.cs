@@ -1,5 +1,5 @@
-using Application.DTOs.Auth;
 using Application.Interfaces;
+using Application.DTOs.Auth;
 using Domain.Entities;
 using Domain.Enums;
 using Infrastructure.Persistence;
@@ -19,9 +19,14 @@ public class UserService : IUserService
         _passwordHasher = passwordHasher;
     }
 
-    public async Task RegisterVolunteerAsync(RegisterVolunteerRequestDto dto)
+    public async Task<RegisterResponseDto> RegisterVolunteerAsync(RegisterVolunteerRequestDto dto)
     {
-        // Create User
+        // Kontrollera om e-postadressen redan finns
+        if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+        {
+            throw new InvalidOperationException("Email is already registered.");
+        }
+
         var user = new User
         {
             Email = dto.Email,
@@ -31,7 +36,6 @@ public class UserService : IUserService
 
         user.PasswordHash = _passwordHasher.HashPassword(user, dto.Password);
 
-        // Link Volunteer Profile
         var profile = new VolunteerProfile
         {
             FirstName = dto.FirstName,
@@ -44,10 +48,22 @@ public class UserService : IUserService
         _context.VolunteerProfiles.Add(profile);
 
         await _context.SaveChangesAsync();
+
+        return new RegisterResponseDto
+        {
+            UserId = user.Id,
+            Role = user.Role.ToString()
+        };
     }
 
-    public async Task RegisterOrganizationAsync(RegisterOrganizationRequestDto dto)
+    public async Task<RegisterResponseDto> RegisterOrganizationAsync(RegisterOrganizationRequestDto dto)
     {
+        // Kontrollera om e-postadressen redan finns
+        if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+        {
+            throw new InvalidOperationException("Email is already registered.");
+        }
+
         var user = new User
         {
             Email = dto.Email,
@@ -70,5 +86,11 @@ public class UserService : IUserService
         _context.OrganizationProfiles.Add(profile);
 
         await _context.SaveChangesAsync();
+
+        return new RegisterResponseDto
+        {
+            UserId = user.Id,
+            Role = user.Role.ToString()
+        };
     }
 }

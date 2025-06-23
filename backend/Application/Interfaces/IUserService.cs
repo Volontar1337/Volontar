@@ -4,6 +4,6 @@ namespace Application.Interfaces;
 
 public interface IUserService
 {
-    Task RegisterVolunteerAsync(RegisterVolunteerRequestDto dto);
-    Task RegisterOrganizationAsync(RegisterOrganizationRequestDto dto);
+    Task<RegisterResponseDto> RegisterVolunteerAsync(RegisterVolunteerRequestDto dto);
+    Task<RegisterResponseDto> RegisterOrganizationAsync(RegisterOrganizationRequestDto dto);
 }
