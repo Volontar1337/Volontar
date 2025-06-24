@@ -13,3 +13,7 @@ All frontend commands can be run from the project root:
 Or, run commands directly in the `frontend/` directory as before.
 
 Add your backend code to the `backend/` directory.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.

@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<VolunteerProfile> VolunteerProfiles => Set<VolunteerProfile>();
     public DbSet<OrganizationProfile> OrganizationProfiles => Set<OrganizationProfile>();
+    public DbSet<Mission> Missions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
