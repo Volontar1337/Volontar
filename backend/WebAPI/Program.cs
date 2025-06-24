@@ -1,19 +1,27 @@
 using Infrastructure.Persistence;
 using Infrastructure.Services;
 using Application.Interfaces;
+using Application.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Domain.Entities;
+using WebAPI.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services
+// services
+builder.Services.AddAuthentication("CookieAuth")
+    .AddCookie("CookieAuth", options =>
+    {
+        options.LoginPath = "/login";
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Add application services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+builder.Services.AddScoped<IMissionService, MissionService>();
 
 // Detect environment
 var env = builder.Environment;
@@ -33,8 +41,20 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     }
 });
 
-// Add controllers (if you plan to use them now or soon)
+
+builder.Services.AddAuthorization();
 builder.Services.AddControllers();
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins("http://localhost:5102") // din Swagger-host
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials(); // Viktigt för cookies!
+    });
+});
 
 var app = builder.Build();
 
@@ -45,8 +65,24 @@ if (env.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseMiddleware<WebAPI.Middleware.ExceptionHandlingMiddleware>();
+app.UseRouting();
+
+app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.MapControllers(); // Enable controller routes
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    var context = services.GetRequiredService<AppDbContext>();
+
+    await AppDbContextSeeder.SeedAsync(context, logger);
+}
+
 app.Run();
+

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -71,6 +71,35 @@ namespace Infrastructure.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Missions",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Title = table.Column<string>(type: "TEXT", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", nullable: false),
+                    Location = table.Column<string>(type: "TEXT", nullable: false),
+                    StartTime = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    EndTime = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
+                    CreatedByOrgId = table.Column<Guid>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Missions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Missions_OrganizationProfiles_CreatedByOrgId",
+                        column: x => x.CreatedByOrgId,
+                        principalTable: "OrganizationProfiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Missions_CreatedByOrgId",
+                table: "Missions",
+                column: "CreatedByOrgId");
+
             migrationBuilder.CreateIndex(
                 name: "IX_OrganizationProfiles_UserId",
                 table: "OrganizationProfiles",
@@ -88,10 +117,13 @@ namespace Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "OrganizationProfiles");
+                name: "Missions");
 
             migrationBuilder.DropTable(
                 name: "VolunteerProfiles");
+
+            migrationBuilder.DropTable(
+                name: "OrganizationProfiles");
 
             migrationBuilder.DropTable(
                 name: "Users");
