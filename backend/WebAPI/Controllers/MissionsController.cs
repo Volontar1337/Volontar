@@ -3,6 +3,7 @@ using Application.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Domain.Enums;
 
 namespace WebAPI.Controllers
 {
@@ -12,10 +13,12 @@ namespace WebAPI.Controllers
     public class MissionsController : ControllerBase
     {
         private readonly IMissionService _missionService;
+        private readonly ILogger<MissionsController> _logger;
 
-        public MissionsController(IMissionService missionService)
+        public MissionsController(IMissionService missionService, ILogger<MissionsController> logger)
         {
             _missionService = missionService;
+            _logger = logger;
         }
 
         [HttpPost]
@@ -32,15 +35,25 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("my")]
-        public async Task<IActionResult> GetMyMissions()
+        public async Task<IActionResult> GetMyMissions([FromQuery] MissionStatus? status)
         {
             var orgIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (orgIdClaim == null)
+            {
+                _logger.LogWarning("Missing organization ID claim.");
                 return Unauthorized("Missing organization ID.");
+            }
 
-            var orgId = Guid.Parse(orgIdClaim.Value);
+            if (!Guid.TryParse(orgIdClaim.Value, out Guid orgId))
+            {
+                _logger.LogWarning("Invalid organization ID format: {OrgIdValue}", orgIdClaim.Value);
+                return Unauthorized("Invalid organization ID.");
+            }
 
-            var missions = await _missionService.GetMissionsByOrganizationIdAsync(orgId);
+            _logger.LogInformation("Fetching missions for organization ID: {OrganizationId} with status filter: {Status}", orgId, status);
+
+            var missions = await _missionService.GetMissionsByOrganizationIdAsync(orgId, status);
+
             return Ok(missions);
         }
     }

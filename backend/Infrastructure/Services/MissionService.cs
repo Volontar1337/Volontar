@@ -16,21 +16,32 @@ namespace Application.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<MissionDto>> GetMissionsByOrganizationIdAsync(Guid organizationId)
+        public async Task<IEnumerable<MissionDto>> GetMissionsByOrganizationIdAsync(Guid organizationId, MissionStatus? status = null)
         {
-            return await _context.Missions
+            // Load all missions for the given organization
+            var missions = await _context.Missions
                 .Where(m => m.CreatedByOrgId == organizationId)
-                .Select(m => new MissionDto
-                {
-                    Id = m.Id,
-                    Title = m.Title,
-                    Description = m.Description,
-                    Location = m.Location,
-                    StartTime = m.StartTime,
-                    EndTime = m.EndTime,
-                    Status = m.Status.ToString()
-                })
                 .ToListAsync();
+
+            // If a status filter is provided, apply it
+            if (status.HasValue)
+            {
+                missions = missions
+                    .Where(m => m.Status == status.Value)
+                    .ToList();
+            }
+
+            // Project to DTO
+            return missions.Select(m => new MissionDto
+            {
+                Id = m.Id,
+                Title = m.Title,
+                Description = m.Description,
+                Location = m.Location,
+                StartTime = m.StartTime,
+                EndTime = m.EndTime,
+                Status = m.Status.ToString()
+            });
         }
 
         public async Task<Guid> CreateMissionAsync(CreateMissionDto dto, Guid organizationId)
@@ -43,7 +54,6 @@ namespace Application.Services
                 Location = dto.Location,
                 StartTime = dto.StartTime,
                 EndTime = dto.EndTime,
-                Status = MissionStatus.Active,
                 CreatedByOrgId = organizationId
             };
 
@@ -63,7 +73,6 @@ namespace Application.Services
                 Location = dto.Location,
                 StartTime = dto.StartTime,
                 EndTime = dto.EndTime,
-                Status = Enum.TryParse<MissionStatus>(dto.Status, out var status) ? status : MissionStatus.Active,
                 CreatedByOrgId = organizationId
             };
 

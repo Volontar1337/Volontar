@@ -12,8 +12,19 @@ namespace Domain.Entities
 
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
+        public MissionStatus Status
+        {
+            get
+            {
+                var now = DateTime.UtcNow;
 
-        public MissionStatus Status { get; set; } = MissionStatus.Upcoming;
+                if (now < StartTime)
+                    return MissionStatus.Upcoming;
+                if (now >= StartTime && now <= EndTime)
+                    return MissionStatus.Active;
+                return MissionStatus.Completed;
+            }
+        }
 
         public Guid CreatedByOrgId { get; set; }
         public OrganizationProfile? CreatedByOrg { get; set; }
