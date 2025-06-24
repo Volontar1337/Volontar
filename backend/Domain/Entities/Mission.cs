@@ -16,6 +16,6 @@ namespace Domain.Entities
         public MissionStatus Status { get; set; } = MissionStatus.Upcoming;
 
         public Guid CreatedByOrgId { get; set; }
-        public OrganizationProfile CreatedByOrg { get; set; } = null!;
+        public OrganizationProfile? CreatedByOrg { get; set; }
     }
 }

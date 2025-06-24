@@ -17,6 +17,43 @@ namespace Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.6");
 
+            modelBuilder.Entity("Domain.Entities.Mission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedByOrgId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("EndTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByOrgId");
+
+                    b.ToTable("Missions");
+                });
+
             modelBuilder.Entity("Domain.Entities.OrganizationProfile", b =>
                 {
                     b.Property<Guid>("Id")
@@ -104,6 +141,17 @@ namespace Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("VolunteerProfiles");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Mission", b =>
+                {
+                    b.HasOne("Domain.Entities.OrganizationProfile", "CreatedByOrg")
+                        .WithMany()
+                        .HasForeignKey("CreatedByOrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByOrg");
                 });
 
             modelBuilder.Entity("Domain.Entities.OrganizationProfile", b =>
