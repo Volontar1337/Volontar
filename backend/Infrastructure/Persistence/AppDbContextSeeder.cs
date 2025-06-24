@@ -7,56 +7,84 @@ namespace Infrastructure.Persistence
 {
     public static class AppDbContextSeeder
     {
+        private static readonly Guid MockOrgId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
         public static async Task SeedAsync(AppDbContext context, ILogger logger)
         {
-            if (await context.Users.AnyAsync())
+            var userExists = await context.Users.AnyAsync();
+            var missionExists = await context.Missions.AnyAsync();
+
+            if (!userExists)
             {
-                logger.LogInformation("Database already seeded.");
-                return;
+                var user = new User
+                {
+                    Id = MockOrgId,
+                    Email = "mock_orguser@test.com",
+                    PasswordHash = "not_relevant_for_mock",
+                    Role = UserRole.Organization
+                };
+
+                var orgProfile = new OrganizationProfile
+                {
+                    Id = MockOrgId,             // ✅ ID matches user and mission references
+                    UserId = MockOrgId,
+                    OrganizationName = "Mock Organization",
+                    ContactPerson = "Mock Contact",
+                    PhoneNumber = "0700000000",
+                    Website = "https://mock.org",
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                context.Users.Add(user);
+                context.OrganizationProfiles.Add(orgProfile);
+
+                await context.SaveChangesAsync();
+                logger.LogInformation("Seeded mock organization user.");
             }
 
-            var userId = Guid.Parse("0b185b41-cd69-4294-836f-863310deab86");
-            var orgId = Guid.Parse("235cad2a-f261-4854-8eff-220e1a6bb04b");
-            var missionId = Guid.Parse("ba98a7a6-90b1-4b1f-9283-9ca470642e99");
-
-            var user = new User
+            if (!missionExists)
             {
-                Id = userId,
-                Email = "orguser@test.com",
-                PasswordHash = "dummyhash",
-                Role = UserRole.Organization
-            };
+                var missions = new List<Mission>
+                {
+                    new Mission
+                    {
+                        Id = Guid.NewGuid(),
+                        Title = "Completed Mission",
+                        Description = "This mission has already ended.",
+                        Location = "Old Town",
+                        StartTime = DateTime.UtcNow.AddDays(-10),
+                        EndTime = DateTime.UtcNow.AddDays(-5),
+                        CreatedByOrgId = MockOrgId
+                    },
+                    new Mission
+                    {
+                        Id = Guid.NewGuid(),
+                        Title = "Active Mission",
+                        Description = "This mission is happening now.",
+                        Location = "Main Square",
+                        StartTime = DateTime.UtcNow.AddHours(-1),
+                        EndTime = DateTime.UtcNow.AddHours(2),
+                        CreatedByOrgId = MockOrgId
+                    },
+                    new Mission
+                    {
+                        Id = Guid.NewGuid(),
+                        Title = "Upcoming Mission",
+                        Description = "This mission will happen in the future.",
+                        Location = "New District",
+                        StartTime = DateTime.UtcNow.AddDays(3),
+                        EndTime = DateTime.UtcNow.AddDays(5),
+                        CreatedByOrgId = MockOrgId
+                    }
+                };
 
-            var orgProfile = new OrganizationProfile
-            {
-                Id = orgId,
-                UserId = userId,
-                OrganizationName = "TestOrg",
-                ContactPerson = "Testperson",
-                PhoneNumber = "0701234567",
-                Website = "https://testorg.se",
-                CreatedAt = DateTime.UtcNow
-            };
+                context.Missions.AddRange(missions);
+                await context.SaveChangesAsync();
 
-            var mission = new Mission
-            {
-                Id = missionId,
-                Title = "Testuppdrag",
-                Description = "Beskrivning av testuppdrag",
-                Location = "Testgatan 1, Teststad",
-                StartTime = DateTime.Parse("2025-07-01T10:00:00Z"),
-                EndTime = DateTime.Parse("2025-07-01T14:00:00Z"),
-                Status = MissionStatus.Upcoming,
-                CreatedByOrgId = orgId
-            };
+                logger.LogInformation("Seeded mock missions.");
+            }
 
-            context.Users.Add(user);
-            context.OrganizationProfiles.Add(orgProfile);
-            context.Missions.Add(mission);
-
-            await context.SaveChangesAsync();
-
-            logger.LogInformation("Database seeded successfully.");
+            logger.LogInformation("Database seeding complete.");
         }
     }
 }

@@ -41,7 +41,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     }
 });
 
-
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
@@ -49,10 +48,10 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:5102") // din Swagger-host
+        policy.WithOrigins("http://localhost:5102")
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials(); // Viktigt för cookies!
+              .AllowCredentials(); // For Cookies!
     });
 });
 
@@ -75,13 +74,17 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.MapControllers(); // Enable controller routes
 
-using (var scope = app.Services.CreateScope())
+// Seed test data only in Development
+if (env.IsDevelopment())
 {
-    var services = scope.ServiceProvider;
-    var logger = services.GetRequiredService<ILogger<Program>>();
-    var context = services.GetRequiredService<AppDbContext>();
-
-    await AppDbContextSeeder.SeedAsync(context, logger);
+    // Only seed in development
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        var context = services.GetRequiredService<AppDbContext>();
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        await AppDbContextSeeder.SeedAsync(context, logger);
+    }
 }
 
 app.Run();
