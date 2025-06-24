@@ -34,13 +34,11 @@ namespace WebAPI.Controllers
         [HttpGet("my")]
         public async Task<IActionResult> GetMyMissions()
         {
-            /*var orgIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            var orgIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (orgIdClaim == null)
                 return Unauthorized("Missing organization ID.");
 
-            var orgId = Guid.Parse(orgIdClaim.Value);*/
-
-            var orgId = Guid.Parse("235CAD2A-F261-4854-8EFF-220E1A6BB04B");
+            var orgId = Guid.Parse(orgIdClaim.Value);
 
             var missions = await _missionService.GetMissionsByOrganizationIdAsync(orgId);
             return Ok(missions);
