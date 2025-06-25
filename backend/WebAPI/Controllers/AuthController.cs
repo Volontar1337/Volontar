@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Application.DTOs.Auth;
 using System.Security.Claims;
 
 namespace WebAPI.Controllers
@@ -41,6 +42,34 @@ namespace WebAPI.Controllers
             _logger.LogInformation("Mock login issued for OrgId: {OrgId}", mockOrgId);
 
             return Ok("Mock login successful");
+        }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto loginDto)
+        {
+            // Here we just add a placeholder, we will implement real validation in SYS-02.2!
+            if (loginDto.Email == "test@test.com" && loginDto.Password == "Password123!")
+            {
+                var response = new LoginResponseDto
+                {
+                    UserId = "1",
+                    Email = loginDto.Email,
+                    Role = "Organization" // or "Volunteer", depending on the logged-in type
+                };
+                return Ok(response);
+            }
+            else
+            {
+                // NOTE: Generic error message for security
+                return Unauthorized(new { message = "Invalid email or password." });
+            }
+        }
+
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            await HttpContext.SignOutAsync("CookieAuth");
+            return Ok("Logged out successfully");
         }
     }
 }
