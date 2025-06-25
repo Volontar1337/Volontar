@@ -19,9 +19,26 @@ public class UserService : IUserService
         _passwordHasher = passwordHasher;
     }
 
+    // Login
+    // This method authenticates a user by checking their email and password.
+    public async Task<User?> AuthenticateAsync(string email, string password)
+    {
+        // Look up user by email
+        var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
+        if (user == null)
+            return null;
+
+        // Verify hashed password
+        var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+        if (result == PasswordVerificationResult.Success)
+            return user;
+
+        // Invalid login
+        return null;
+    }
+
     public async Task<RegisterResponseDto> RegisterVolunteerAsync(RegisterVolunteerRequestDto dto)
     {
-        // Kontrollera om e-postadressen redan finns
         if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
         {
             throw new InvalidOperationException("Email is already registered.");
@@ -58,7 +75,6 @@ public class UserService : IUserService
 
     public async Task<RegisterResponseDto> RegisterOrganizationAsync(RegisterOrganizationRequestDto dto)
     {
-        // Kontrollera om e-postadressen redan finns
         if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
         {
             throw new InvalidOperationException("Email is already registered.");

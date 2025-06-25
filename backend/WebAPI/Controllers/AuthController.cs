@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Application.DTOs.Auth;
+using Application.Interfaces;
+using Domain.Entities;
 using System.Security.Claims;
 
 namespace WebAPI.Controllers
@@ -11,10 +13,12 @@ namespace WebAPI.Controllers
     public class AuthController : ControllerBase
     {
         private readonly ILogger<AuthController> _logger;
+        private readonly IUserService _userService;
 
-        public AuthController(ILogger<AuthController> logger)
+        public AuthController(ILogger<AuthController> logger, IUserService userService)
         {
             _logger = logger;
+            _userService = userService;
         }
 
         [AllowAnonymous]
@@ -44,25 +48,30 @@ namespace WebAPI.Controllers
             return Ok("Mock login successful");
         }
 
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto loginDto)
         {
-            // Here we just add a placeholder, we will implement real validation in SYS-02.2!
-            if (loginDto.Email == "test@test.com" && loginDto.Password == "Password123!")
+            // Use the real UserService for login
+            var user = await _userService.AuthenticateAsync(loginDto.Email, loginDto.Password);
+
+            if (user == null)
             {
-                var response = new LoginResponseDto
-                {
-                    UserId = "1",
-                    Email = loginDto.Email,
-                    Role = "Organization" // or "Volunteer", depending on the logged-in type
-                };
-                return Ok(response);
-            }
-            else
-            {
-                // NOTE: Generic error message for security
+                // Generic error for security reasons
                 return Unauthorized(new { message = "Invalid email or password." });
             }
+
+            // Optionally: You could sign in with CookieAuth here already
+            // (That comes in next SYS-step, for now just return user info)
+
+            var response = new LoginResponseDto
+            {
+                UserId = user.Id.ToString(),
+                Email = user.Email,
+                Role = user.Role.ToString()
+            };
+
+            return Ok(response);
         }
 
         [HttpPost("logout")]
