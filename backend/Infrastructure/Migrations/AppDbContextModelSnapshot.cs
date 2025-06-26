@@ -35,177 +35,177 @@ namespace Infrastructure.Migrations
                     b.Property<int>("OrganizationId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("Time");
+                    b.Property<DateTime>("Time")
+                        .HasColumnType("TEXT");
 
-                    modelBuilder.Entity("Domain.Entities.Mission", b =>
-                        {
-                            b.Property<Guid>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("TEXT");
+                    b.HasKey("Id");
 
-                            b.Property<Guid>("CreatedByOrgId")
-                                .HasColumnType("TEXT");
-
-                            b.Property<string>("Description")
-                                .IsRequired()
-                                .HasColumnType("TEXT");
-
-                            b.Property<DateTime>("EndTime")
-                                .HasColumnType("TEXT");
-
-                            b.Property<string>("Location")
-                                .IsRequired()
-                                .HasColumnType("TEXT");
-
-                            b.Property<DateTime>("StartTime")
-                                .HasColumnType("TEXT");
-
-                            b.Property<string>("Title")
-                                .IsRequired()
-
-                                .HasColumnType("TEXT");
-
-                            b.HasKey("Id");
-
-
-                            b.ToTable("Assignments");
-
-                            b.HasIndex("CreatedByOrgId");
-
-                            b.ToTable("Missions");
-
-                        });
-
-                    modelBuilder.Entity("Domain.Entities.OrganizationProfile", b =>
-                        {
-                            b.Property<Guid>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("TEXT");
-
-                            b.Property<string>("ContactPerson")
-                                .HasColumnType("TEXT");
-
-                            b.Property<DateTime>("CreatedAt")
-                                .HasColumnType("TEXT");
-
-                            b.Property<string>("OrganizationName")
-                                .IsRequired()
-                                .HasColumnType("TEXT");
-
-                            b.Property<string>("PhoneNumber")
-                                .HasColumnType("TEXT");
-
-                            b.Property<Guid>("UserId")
-                                .HasColumnType("TEXT");
-
-                            b.Property<string>("Website")
-                                .HasColumnType("TEXT");
-
-                            b.HasKey("Id");
-
-                            b.HasIndex("UserId")
-                                .IsUnique();
-
-                            b.ToTable("OrganizationProfiles");
-                        });
-
-                    modelBuilder.Entity("Domain.Entities.User", b =>
-                        {
-                            b.Property<Guid>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("TEXT");
-
-                            b.Property<DateTime>("CreatedAt")
-                                .HasColumnType("TEXT");
-
-                            b.Property<string>("Email")
-                                .IsRequired()
-                                .HasColumnType("TEXT");
-
-                            b.Property<string>("PasswordHash")
-                                .IsRequired()
-                                .HasColumnType("TEXT");
-
-                            b.Property<int>("Role")
-                                .HasColumnType("INTEGER");
-
-                            b.HasKey("Id");
-
-                            b.ToTable("Users");
-                        });
-
-                    modelBuilder.Entity("Domain.Entities.VolunteerProfile", b =>
-                        {
-                            b.Property<Guid>("Id")
-                                .ValueGeneratedOnAdd()
-                                .HasColumnType("TEXT");
-
-                            b.Property<DateTime>("CreatedAt")
-                                .HasColumnType("TEXT");
-
-                            b.Property<string>("FirstName")
-                                .IsRequired()
-                                .HasColumnType("TEXT");
-
-                            b.Property<string>("LastName")
-                                .IsRequired()
-                                .HasColumnType("TEXT");
-
-                            b.Property<string>("PhoneNumber")
-                                .HasColumnType("TEXT");
-
-                            b.Property<Guid>("UserId")
-                                .HasColumnType("TEXT");
-
-                            b.HasKey("Id");
-
-                            b.HasIndex("UserId")
-                                .IsUnique();
-
-                            b.ToTable("VolunteerProfiles");
-                        });
-
-                    modelBuilder.Entity("Domain.Entities.Mission", b =>
-                        {
-                            b.HasOne("Domain.Entities.OrganizationProfile", "CreatedByOrg")
-                                .WithMany()
-                                .HasForeignKey("CreatedByOrgId")
-                                .OnDelete(DeleteBehavior.Cascade)
-                                .IsRequired();
-
-                            b.Navigation("CreatedByOrg");
-                        });
-
-                    modelBuilder.Entity("Domain.Entities.OrganizationProfile", b =>
-                        {
-                            b.HasOne("Domain.Entities.User", "User")
-                                .WithOne("OrganizationProfile")
-                                .HasForeignKey("Domain.Entities.OrganizationProfile", "UserId")
-                                .OnDelete(DeleteBehavior.Cascade)
-                                .IsRequired();
-
-                            b.Navigation("User");
-                        });
-
-                    modelBuilder.Entity("Domain.Entities.VolunteerProfile", b =>
-                        {
-                            b.HasOne("Domain.Entities.User", "User")
-                                .WithOne("VolunteerProfile")
-                                .HasForeignKey("Domain.Entities.VolunteerProfile", "UserId")
-                                .OnDelete(DeleteBehavior.Cascade)
-                                .IsRequired();
-
-                            b.Navigation("User");
-                        });
-
-                    modelBuilder.Entity("Domain.Entities.User", b =>
-                        {
-                            b.Navigation("OrganizationProfile");
-
-                            b.Navigation("VolunteerProfile");
-                        });
-#pragma warning restore 612, 618
+                    b.ToTable("Assignments");
                 });
+
+            modelBuilder.Entity("Domain.Entities.Mission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedByOrgId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("EndTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("StartTime")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByOrgId");
+
+                    b.ToTable("Missions");
+                });
+
+            modelBuilder.Entity("Domain.Entities.OrganizationProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ContactPerson")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("OrganizationName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Website")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("OrganizationProfiles");
+                });
+
+            modelBuilder.Entity("Domain.Entities.User", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Domain.Entities.VolunteerProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("VolunteerProfiles");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Mission", b =>
+                {
+                    b.HasOne("Domain.Entities.OrganizationProfile", "CreatedByOrg")
+                        .WithMany()
+                        .HasForeignKey("CreatedByOrgId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByOrg");
+                });
+
+            modelBuilder.Entity("Domain.Entities.OrganizationProfile", b =>
+                {
+                    b.HasOne("Domain.Entities.User", "User")
+                        .WithOne("OrganizationProfile")
+                        .HasForeignKey("Domain.Entities.OrganizationProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.VolunteerProfile", b =>
+                {
+                    b.HasOne("Domain.Entities.User", "User")
+                        .WithOne("VolunteerProfile")
+                        .HasForeignKey("Domain.Entities.VolunteerProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.User", b =>
+                {
+                    b.Navigation("OrganizationProfile");
+
+                    b.Navigation("VolunteerProfile");
+                });
+#pragma warning restore 612, 618
         }
     }
 }
