@@ -1,7 +1,6 @@
-using Domain.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Application.DTOs.Auth;
+using Application.DTOs;
 using Application.Interfaces;
 using Infrastructure.Persistence;
 

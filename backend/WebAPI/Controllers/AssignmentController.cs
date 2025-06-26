@@ -1,11 +1,9 @@
-using Application.Assignments;
+using Application.DTOs;
 using Domain.Entities;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore; // LÄGG TILL för async .ToListAsync()
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace WebAPI.Controllers
 {

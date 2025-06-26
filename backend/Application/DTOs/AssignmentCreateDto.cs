@@ -1,4 +1,4 @@
-namespace Application.Assignments
+namespace Application.DTOs
 {
     public class AssignmentCreateDto
     {
