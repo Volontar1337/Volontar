@@ -1,0 +1,9 @@
+# VS stuff
+.vs/
+*.user
+*.suo
+*.swp
+
+# SQLite junk
+*.db-shm
+*.db-wal

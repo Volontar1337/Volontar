@@ -1,12 +1,11 @@
-using Infrastructure.Persistence;
-using Infrastructure.Services;
 using Application.Interfaces;
 using Application.Services;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
 using Domain.Entities;
+using Infrastructure.Persistence;
+using Infrastructure.Services;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using WebAPI.Middleware;
-using Microsoft.AspNetCore.Authentication.Cookies; // För CookieDefaults
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -83,7 +82,7 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:5102") // Använd rätt port för er frontend!
+        policy.WithOrigins("http://localhost:5102", "http://localhost:8081") // Använd rätt port för er frontend!
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials(); // NÖDVÄNDIGT för cookies!
@@ -121,9 +120,9 @@ if (env.IsDevelopment())
         var services = scope.ServiceProvider;
         var context = services.GetRequiredService<AppDbContext>();
         var logger = services.GetRequiredService<ILogger<Program>>();
+        context.Database.Migrate();
         await AppDbContextSeeder.SeedAsync(context, logger);
     }
 }
-
 
 app.Run();

@@ -1,5 +1,6 @@
 using Domain.Entities;
 using Domain.Enums;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -34,6 +35,9 @@ namespace Infrastructure.Persistence
                     Website = "https://mock.org",
                     CreatedAt = DateTime.UtcNow
                 };
+
+                var hasher = new PasswordHasher<User>();
+                user.PasswordHash = hasher.HashPassword(user, "supersecret123");
 
                 context.Users.Add(user);
                 context.OrganizationProfiles.Add(orgProfile);
