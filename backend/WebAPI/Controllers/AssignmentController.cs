@@ -3,6 +3,7 @@ using Domain.Entities;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore; // LÄGG TILL för async .ToListAsync()
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -45,17 +46,29 @@ namespace WebAPI.Controllers
                 Description = dto.Description
             };
 
-            // Om OrganizationId är int, avkommentera nedan istället:
-            // var assignment = new Assignment
-            // {
-            //     OrganizationId = int.Parse(orgIdClaim.Value),
-            //     ...
-            // };
-
             _context.Assignments.Add(assignment);
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Uppdrag skapat!", assignment.Id });
+        }
+
+        // NYTT: GET /api/Assignment – Visa alla uppdrag för volontärer
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetAllAssignments()
+        {
+            var assignments = await _context.Assignments
+                .OrderBy(a => a.Time)
+                .ThenBy(a => a.Location)
+                .Select(a => new {
+                    a.Id,
+                    a.Location,
+                    a.Time,
+                    a.Description
+                })
+                .ToListAsync();
+
+            return Ok(assignments);
         }
 
         // Endast för utveckling/felsökning
