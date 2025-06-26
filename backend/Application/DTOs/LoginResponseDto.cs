@@ -1,4 +1,4 @@
-namespace Application.DTOs.Auth
+namespace Application.DTOs
 {
     public class LoginResponseDto
     {
@@ -7,3 +7,4 @@ namespace Application.DTOs.Auth
         public string? Role { get; set; }
     }
 }
+

@@ -1,4 +1,4 @@
-namespace Application.DTOs.Auth
+namespace Application.DTOs
 {
     public class LoginRequestDto
     {
@@ -6,3 +6,4 @@ namespace Application.DTOs.Auth
         public string Password { get; set; } = default!;
     }
 }
+

@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Application.DTOs.Auth;
+using Application.DTOs;
 using Application.Interfaces;
 using System.Security.Claims;
 

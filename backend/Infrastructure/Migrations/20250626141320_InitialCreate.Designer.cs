@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250625123237_Init")]
-    partial class Init
+    [Migration("20250626141320_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -35,8 +35,8 @@ namespace Infrastructure.Migrations
                     b.Property<string>("Location")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("OrganizationId")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("OrganizationId")
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("Time")
                         .HasColumnType("TEXT");

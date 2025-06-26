@@ -1,5 +1,5 @@
 using Application.Interfaces;
-using Application.DTOs.Auth;
+using Application.DTOs;
 using Domain.Entities;
 using Domain.Enums;
 using Infrastructure.Persistence;
