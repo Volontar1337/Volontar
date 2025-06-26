@@ -6,27 +6,52 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Domain.Entities;
 using WebAPI.Middleware;
+using Microsoft.AspNetCore.Authentication.Cookies; // För CookieDefaults
 
 var builder = WebApplication.CreateBuilder(args);
 
-// services
+// =========================
+// 1. COOKIE AUTHENTICATION
+// =========================
+// Välj ett gemensamt namn för authentication scheme: "CookieAuth"
 builder.Services.AddAuthentication("CookieAuth")
     .AddCookie("CookieAuth", options =>
     {
-        options.LoginPath = "/login";
+        // Sätt enhetliga och tydliga cookie-alternativ för API
+        options.LoginPath = "/api/auth/login";     // API endpoint, EJ någon MVC-view
+        options.LogoutPath = "/api/auth/logout";   // API endpoint för logout
+        options.Cookie.Name = "volunteer_platform_auth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax; // Eller Strict om frontend klarar det!
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Tvinga HTTPS!
+        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.SlidingExpiration = true;
+        options.Events.OnRedirectToLogin = context =>
+        {
+            // API:er ska INTE redirecta vid 401 utan svara med 401-status
+            context.Response.StatusCode = 401;
+            return Task.CompletedTask;
+        };
     });
+
+// =========================
+// 2. SWAGGER (API-dokumentation)
+// =========================
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add application services
+// =========================
+// 3. ERA APPLICATION SERVICES
+// =========================
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IMissionService, MissionService>();
 
-// Detect environment
+// =========================
+// 4. DBContext: Environment-aware setup
+// =========================
 var env = builder.Environment;
 
-// Conditionally configure EF Core
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -41,23 +66,35 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     }
 });
 
+// =========================
+// 5. AUTHORIZATION
+// =========================
 builder.Services.AddAuthorization();
+
+// =========================
+// 6. CONTROLLERS
+// =========================
 builder.Services.AddControllers();
 
+// =========================
+// 7. CORS FÖR COOKIES
+// =========================
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:5102")
+        policy.WithOrigins("http://localhost:5102") // Använd rätt port för er frontend!
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials(); // For Cookies!
+              .AllowCredentials(); // NÖDVÄNDIGT för cookies!
     });
 });
 
+// =========================
+// 8. APP PIPELINE & MIDDLEWARES
+// =========================
 var app = builder.Build();
 
-// Swagger in dev
 if (env.IsDevelopment())
 {
     app.UseSwagger();
@@ -66,18 +103,19 @@ if (env.IsDevelopment())
 
 app.UseRouting();
 
-app.UseCors();
+app.UseCors();           // Viktigt: CORS före Auth
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
-app.MapControllers(); // Enable controller routes
+app.MapControllers();
 
-// Seed test data only in Development
+// =========================
+// 9. SEED DATA I DEV
+// =========================
 if (env.IsDevelopment())
 {
-    // Only seed in development
     using (var scope = app.Services.CreateScope())
     {
         var services = scope.ServiceProvider;
@@ -88,4 +126,3 @@ if (env.IsDevelopment())
 }
 
 app.Run();
-
