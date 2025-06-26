@@ -6,40 +6,49 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Domain.Entities;
 using WebAPI.Middleware;
-using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// AUTHENTICATION & COOKIE CONFIGURATION
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+// =========================
+// 1. COOKIE AUTHENTICATION
+// =========================
+// Välj ett gemensamt namn för authentication scheme: "CookieAuth"
+builder.Services.AddAuthentication("CookieAuth")
+    .AddCookie("CookieAuth", options =>
     {
-        options.LoginPath = "/api/auth/login"; // API login endpoint
-        options.LogoutPath = "/api/auth/logout";
+        // Sätt enhetliga och tydliga cookie-alternativ för API
+        options.LoginPath = "/api/auth/login";     // API endpoint, EJ någon MVC-view
+        options.LogoutPath = "/api/auth/logout";   // API endpoint för logout
         options.Cookie.Name = "volunteer_platform_auth";
-        options.Cookie.HttpOnly = true; // Prevents JS access to the cookie
-        options.Cookie.SameSite = SameSiteMode.Lax; // Use Strict for extra security if possible
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Always use Secure in production!
-        options.ExpireTimeSpan = TimeSpan.FromDays(7); // Cookie lifetime
-        options.SlidingExpiration = true; // Refreshes expiration on activity
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax; // Eller Strict om frontend klarar det!
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Tvinga HTTPS!
+        options.ExpireTimeSpan = TimeSpan.FromDays(7);
+        options.SlidingExpiration = true;
         options.Events.OnRedirectToLogin = context =>
         {
-            // For APIs: Return 401 instead of redirecting to login page
+            // API:er ska INTE redirecta vid 401 utan svara med 401-status
             context.Response.StatusCode = 401;
             return Task.CompletedTask;
         };
     });
 
-// SWAGGER (OpenAPI docs)
+// =========================
+// 2. SWAGGER (API-dokumentation)
+// =========================
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// YOUR APPLICATION SERVICES
+// =========================
+// 3. ERA APPLICATION SERVICES
+// =========================
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IMissionService, MissionService>();
 
-// ENVIRONMENT AND DATABASE SETUP
+// =========================
+// 4. DBContext: Environment-aware setup
+// =========================
 var env = builder.Environment;
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -56,27 +65,35 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     }
 });
 
-// AUTHORIZATION (for [Authorize] attributes)
+// =========================
+// 5. AUTHORIZATION
+// =========================
 builder.Services.AddAuthorization();
 
-// CONTROLLER SUPPORT
+// =========================
+// 6. CONTROLLERS
+// =========================
 builder.Services.AddControllers();
 
-// CORS CONFIGURATION - required for cookies with frontend
+// =========================
+// 7. CORS FÖR COOKIES
+// =========================
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:5102") // Your frontend URL
+        policy.WithOrigins("http://localhost:5102") // Använd rätt port för er frontend!
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials(); // Must be set to allow cookies
+              .AllowCredentials(); // NÖDVÄNDIGT för cookies!
     });
 });
 
+// =========================
+// 8. APP PIPELINE & MIDDLEWARES
+// =========================
 var app = builder.Build();
 
-// SWAGGER only in development
 if (env.IsDevelopment())
 {
     app.UseSwagger();
@@ -85,15 +102,17 @@ if (env.IsDevelopment())
 
 app.UseRouting();
 
-app.UseCors();           // Should come before auth!
-app.UseAuthentication(); // Enables cookie/session authentication
+app.UseCors();           // Viktigt: CORS före Auth
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 app.MapControllers();
 
-// SEED DATA (development only)
+// =========================
+// 9. SEED DATA I DEV
+// =========================
 if (env.IsDevelopment())
 {
     using (var scope = app.Services.CreateScope())
