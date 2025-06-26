@@ -32,8 +32,8 @@ namespace Infrastructure.Migrations
                     b.Property<string>("Location")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("OrganizationId")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("OrganizationId")
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("Time")
                         .HasColumnType("TEXT");
