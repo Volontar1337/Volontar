@@ -1,3 +1,5 @@
+using System;
+using System.ComponentModel.DataAnnotations.Schema; // For [NotMapped]
 using Domain.Enums;
 
 namespace Domain.Entities
@@ -12,6 +14,8 @@ namespace Domain.Entities
 
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
+
+        [NotMapped]
         public MissionStatus Status
         {
             get

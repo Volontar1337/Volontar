@@ -25,8 +25,8 @@ namespace WebAPI.Controllers
         [HttpPost("login-test")]
         public async Task<IActionResult> LoginTest()
         {
+            // This is only for test/dev!
             var mockOrgId = "11111111-1111-1111-1111-111111111111";
-
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, mockOrgId),
@@ -34,36 +34,55 @@ namespace WebAPI.Controllers
                 new Claim(ClaimTypes.Name, "Mock Organization")
             };
 
-            var identity = new ClaimsIdentity(claims, "CookieAuth");
+            var identity = new ClaimsIdentity(claims, "Cookies");
             var principal = new ClaimsPrincipal(identity);
             var authProperties = new AuthenticationProperties
             {
                 IsPersistent = true
             };
 
-            await HttpContext.SignInAsync("CookieAuth", principal, authProperties);
+            await HttpContext.SignInAsync("Cookies", principal, authProperties);
 
             _logger.LogInformation("Mock login issued for OrgId: {OrgId}", mockOrgId);
 
-            return Ok("Mock login successful");
+            return Ok(new { message = "Mock login successful" });
         }
 
         [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto loginDto)
         {
-            // Use the real UserService for login
+            // Validate credentials using your real user service
             var user = await _userService.AuthenticateAsync(loginDto.Email, loginDto.Password);
 
             if (user == null)
             {
-                // Generic error for security reasons
+                // Never reveal which field was wrong (security best practice)
                 return Unauthorized(new { message = "Invalid email or password." });
             }
 
-            // Optionally: You could sign in with CookieAuth here already
-            // (That comes in next SYS-step, for now just return user info)
+            // Build claims for authenticated user
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email ?? string.Empty),
+                new Claim(ClaimTypes.Role, user.Role.ToString())
+            };
 
+            var identity = new ClaimsIdentity(claims, "Cookies");
+            var principal = new ClaimsPrincipal(identity);
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = true, // Persistent cookie/session
+                ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7) // Optional: Set expiry (should match Program.cs)
+            };
+
+            // Sign in: this issues the cookie!
+            await HttpContext.SignInAsync("Cookies", principal, authProperties);
+
+            _logger.LogInformation("Login successful for user {UserId}", user.Id);
+
+            // Return basic user info (never sensitive data)
             var response = new LoginResponseDto
             {
                 UserId = user.Id.ToString(),
@@ -71,14 +90,15 @@ namespace WebAPI.Controllers
                 Role = user.Role.ToString()
             };
 
-            return Ok(response);
+            return Ok(response); // Cookie will be sent automatically in Set-Cookie header
         }
 
+        [Authorize]
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
-            await HttpContext.SignOutAsync("CookieAuth");
-            return Ok("Logged out successfully");
+            await HttpContext.SignOutAsync("Cookies");
+            return Ok(new { message = "Logged out successfully" });
         }
     }
 }

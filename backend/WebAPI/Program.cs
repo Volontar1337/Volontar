@@ -6,27 +6,42 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Domain.Entities;
 using WebAPI.Middleware;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// services
-builder.Services.AddAuthentication("CookieAuth")
-    .AddCookie("CookieAuth", options =>
+// AUTHENTICATION & COOKIE CONFIGURATION
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
-        options.LoginPath = "/login";
+        options.LoginPath = "/api/auth/login"; // API login endpoint
+        options.LogoutPath = "/api/auth/logout";
+        options.Cookie.Name = "volunteer_platform_auth";
+        options.Cookie.HttpOnly = true; // Prevents JS access to the cookie
+        options.Cookie.SameSite = SameSiteMode.Lax; // Use Strict for extra security if possible
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // Always use Secure in production!
+        options.ExpireTimeSpan = TimeSpan.FromDays(7); // Cookie lifetime
+        options.SlidingExpiration = true; // Refreshes expiration on activity
+        options.Events.OnRedirectToLogin = context =>
+        {
+            // For APIs: Return 401 instead of redirecting to login page
+            context.Response.StatusCode = 401;
+            return Task.CompletedTask;
+        };
     });
+
+// SWAGGER (OpenAPI docs)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add application services
+// YOUR APPLICATION SERVICES
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IMissionService, MissionService>();
 
-// Detect environment
+// ENVIRONMENT AND DATABASE SETUP
 var env = builder.Environment;
 
-// Conditionally configure EF Core
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -41,23 +56,27 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     }
 });
 
+// AUTHORIZATION (for [Authorize] attributes)
 builder.Services.AddAuthorization();
+
+// CONTROLLER SUPPORT
 builder.Services.AddControllers();
 
+// CORS CONFIGURATION - required for cookies with frontend
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("http://localhost:5102")
+        policy.WithOrigins("http://localhost:5102") // Your frontend URL
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials(); // For Cookies!
+              .AllowCredentials(); // Must be set to allow cookies
     });
 });
 
 var app = builder.Build();
 
-// Swagger in dev
+// SWAGGER only in development
 if (env.IsDevelopment())
 {
     app.UseSwagger();
@@ -66,18 +85,17 @@ if (env.IsDevelopment())
 
 app.UseRouting();
 
-app.UseCors();
-app.UseAuthentication();
+app.UseCors();           // Should come before auth!
+app.UseAuthentication(); // Enables cookie/session authentication
 app.UseAuthorization();
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
-app.MapControllers(); // Enable controller routes
+app.MapControllers();
 
-// Seed test data only in Development
+// SEED DATA (development only)
 if (env.IsDevelopment())
 {
-    // Only seed in development
     using (var scope = app.Services.CreateScope())
     {
         var services = scope.ServiceProvider;
@@ -88,4 +106,3 @@ if (env.IsDevelopment())
 }
 
 app.Run();
-
