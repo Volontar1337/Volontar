@@ -3,7 +3,6 @@ using Domain.Entities;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -24,6 +23,7 @@ namespace WebAPI.Controllers
         [Authorize(Roles = "Organization")]
         public async Task<IActionResult> CreateAssignment([FromBody] AssignmentCreateDto dto)
         {
+            // Kontrollera indata
             if (string.IsNullOrWhiteSpace(dto.Location) ||
                 string.IsNullOrWhiteSpace(dto.Description) ||
                 dto.Time == default)
@@ -31,22 +31,39 @@ namespace WebAPI.Controllers
                 return BadRequest("Alla fält måste vara ifyllda.");
             }
 
+            // Hämta OrganizationId från claims
             var orgIdClaim = User.Claims.FirstOrDefault(c => c.Type == "OrganizationId");
             if (orgIdClaim == null)
-                return Forbid("Du måste vara inloggad som organisation.");
+                return StatusCode(403, "Du måste vara inloggad som organisation.");
 
+            // Om OrganizationId är string/GUID i modellen:
             var assignment = new Assignment
             {
-                OrganizationId = int.Parse(orgIdClaim.Value),
+                OrganizationId = orgIdClaim.Value,
                 Location = dto.Location,
                 Time = dto.Time,
                 Description = dto.Description
             };
 
+            // Om OrganizationId är int, avkommentera nedan istället:
+            // var assignment = new Assignment
+            // {
+            //     OrganizationId = int.Parse(orgIdClaim.Value),
+            //     ...
+            // };
+
             _context.Assignments.Add(assignment);
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Uppdrag skapat!", assignment.Id });
+        }
+
+        // Endast för utveckling/felsökning
+        [HttpGet("claims")]
+        public IActionResult Claims()
+        {
+            var claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
+            return Ok(claims);
         }
     }
 }

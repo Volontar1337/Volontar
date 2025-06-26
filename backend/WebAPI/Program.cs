@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Domain.Entities;
 using WebAPI.Middleware;
+using Microsoft.AspNetCore.Authentication.Cookies; // För CookieDefaults
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -123,5 +124,6 @@ if (env.IsDevelopment())
         await AppDbContextSeeder.SeedAsync(context, logger);
     }
 }
+
 
 app.Run();

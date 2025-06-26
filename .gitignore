@@ -113,3 +113,6 @@ appsettings.Development.json
 
 # Local database files
 *.db
+
+# DB Browser for SQLite project files
+*.sqbpro
