@@ -20,7 +20,7 @@ namespace WebAPI.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Organization")]
-        public async Task<IActionResult> CreateAssignment([FromBody] AssignmentCreateDto dto)
+        public async Task<IActionResult> CreateAssignment([FromBody] MissionAssignmentCreateDto dto)
         {
             // Kontrollera indata
             if (string.IsNullOrWhiteSpace(dto.Location) ||
@@ -36,15 +36,15 @@ namespace WebAPI.Controllers
                 return StatusCode(403, "Du måste vara inloggad som organisation.");
 
             // Om OrganizationId är string/GUID i modellen:
-            var assignment = new Assignment
+            var assignment = new MissionAssignment
             {
                 OrganizationId = orgIdClaim.Value,
                 Location = dto.Location,
-                Time = dto.Time,
+                Time = dto.Time.ToUniversalTime(),
                 Description = dto.Description
             };
 
-            _context.Assignments.Add(assignment);
+            _context.MissionAssignments.Add(assignment);
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Uppdrag skapat!", assignment.Id });
@@ -55,7 +55,7 @@ namespace WebAPI.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetAllAssignments()
         {
-            var assignments = await _context.Assignments
+            var assignments = await _context.MissionAssignments
                 .OrderBy(a => a.Time)
                 .ThenBy(a => a.Location)
                 .Select(a => new {
