@@ -7,5 +7,6 @@ namespace Application.Interfaces
     {
         Task<IEnumerable<MissionDto>> GetMissionsByOrganizationIdAsync(Guid organizationId, MissionStatus? status = null);
         Task<Guid> CreateMissionAsync(CreateMissionDto dto, Guid organizationId);
+        Task<bool> AssignVolunteerToMissionAsync(Guid missionId, Guid volunteerId);
     }
 }

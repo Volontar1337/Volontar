@@ -10,7 +10,13 @@ namespace Domain.Entities
         public Guid VolunteerId { get; set; }
         public VolunteerProfile Volunteer { get; set; } = null!;
 
-        public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
+        public DateTime AssignedAt { get; set; }
+
         public string? RoleDescription { get; set; }
+
+        public MissionAssignment()
+        {
+            AssignedAt = DateTime.UtcNow;
+        }
     }
 }

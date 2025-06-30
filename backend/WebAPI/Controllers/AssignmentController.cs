@@ -1,4 +1,5 @@
 using Application.DTOs;
+using Application.Interfaces;
 using Domain.Entities;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
@@ -12,13 +13,15 @@ namespace WebAPI.Controllers
     public class AssignmentController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IMissionService _missionService;
 
-        public AssignmentController(AppDbContext context)
+        public AssignmentController(AppDbContext context, IMissionService missionService)
         {
             _context = context;
+            _missionService = missionService;
         }
 
-        [HttpPost]
+        /*[HttpPost]
         //[AllowAnonymous]
         [Authorize(Roles = "Volunteer")]
         public async Task<IActionResult> CreateAssignment([FromBody] MissionAssignmentCreateDto dto)
@@ -43,7 +46,7 @@ namespace WebAPI.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Du har anmält dig till uppdraget!", assignment.Id });
-        }
+        }*/
 
         [HttpGet]
         [AllowAnonymous]
@@ -53,14 +56,15 @@ namespace WebAPI.Controllers
                 .Include(a => a.Mission)
                 .Include(a => a.Volunteer)
                 .OrderBy(a => a.AssignedAt)
-                .Select(ma => new {
-                ma.Id,
-                MissionTitle = ma.Mission.Title,
-                VolunteerName = ma.Volunteer.FirstName + " " + ma.Volunteer.LastName,
-                VolunteerEmail = ma.Volunteer.User.Email,
-                AssignedAt = ma.AssignedAt,
-                Role = ma.RoleDescription
-            })
+                .Select(ma => new
+                {
+                    ma.Id,
+                    MissionTitle = ma.Mission.Title,
+                    VolunteerName = ma.Volunteer.FirstName + " " + ma.Volunteer.LastName,
+                    VolunteerEmail = ma.Volunteer.User.Email,
+                    AssignedAt = ma.AssignedAt,
+                    Role = ma.RoleDescription
+                })
                 .ToListAsync();
 
             return Ok(assignments);
@@ -79,9 +83,12 @@ namespace WebAPI.Controllers
             var result = await _context.MissionAssignments
                 .Include(ma => ma.Mission)
                 .Include(ma => ma.Volunteer)
-                .Select(ma => new {
+                .Select(ma => new
+                {
                     ma.Id,
+                    MissionId = ma.MissionId,
                     ma.Mission.Title,
+                    VolunteerId = ma.VolunteerId,
                     VolunteerName = ma.Volunteer.FirstName + " " + ma.Volunteer.LastName,
                     ma.RoleDescription,
                     ma.AssignedAt
@@ -89,6 +96,17 @@ namespace WebAPI.Controllers
                 .ToListAsync();
 
             return Ok(result);
+        }
+        [HttpPost("assign")]
+        [Authorize(Roles = "Volunteer")]
+        public async Task<IActionResult> AssignVolunteer([FromBody] AssignVolunteerDto dto)
+        {
+            var success = await _missionService.AssignVolunteerToMissionAsync(dto.MissionId, dto.VolunteerId);
+
+            if (!success)
+                return BadRequest("Volunteer is already assigned to this mission.");
+
+            return Ok("Volunteer successfully assigned to mission.");
         }
     }
 }

@@ -18,12 +18,10 @@ namespace Application.Services
 
         public async Task<IEnumerable<MissionDto>> GetMissionsByOrganizationIdAsync(Guid organizationId, MissionStatus? status = null)
         {
-            // Load all missions for the given organization
             var missions = await _context.Missions
                 .Where(m => m.CreatedByOrgId == organizationId)
                 .ToListAsync();
 
-            // If a status filter is provided, apply it
             if (status.HasValue)
             {
                 missions = missions
@@ -31,7 +29,6 @@ namespace Application.Services
                     .ToList();
             }
 
-            // Project to DTO
             return missions.Select(m => new MissionDto
             {
                 Id = m.Id,
@@ -63,23 +60,25 @@ namespace Application.Services
             return mission.Id;
         }
 
-        public async Task<Guid> CreateMissionAsync(MissionDto dto, Guid organizationId)
+        public async Task<bool> AssignVolunteerToMissionAsync(Guid missionId, Guid volunteerId)
         {
-            var mission = new Mission
+            var alreadyAssigned = await _context.MissionAssignments
+                .AnyAsync(ma => ma.MissionId == missionId && ma.VolunteerId == volunteerId);
+
+            if (alreadyAssigned)
+                return false;
+
+            var assignment = new MissionAssignment
             {
-                Id = dto.Id != Guid.Empty ? dto.Id : Guid.NewGuid(),
-                Title = dto.Title,
-                Description = dto.Description,
-                Location = dto.Location,
-                StartTime = dto.StartTime,
-                EndTime = dto.EndTime,
-                CreatedByOrgId = organizationId
+                MissionId = missionId,
+                VolunteerId = volunteerId,
+                AssignedAt = DateTime.UtcNow
             };
 
-            _context.Missions.Add(mission);
+            _context.MissionAssignments.Add(assignment);
             await _context.SaveChangesAsync();
 
-            return mission.Id;
+            return true;
         }
     }
 }
