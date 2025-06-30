@@ -1,14 +1,16 @@
-using System;
-
 namespace Domain.Entities
 {
     public class MissionAssignment
     {
         public int Id { get; set; }
-        public string? OrganizationId { get; set; }
-        public string? Location { get; set; }
-        public DateTime Time { get; set; }
-        public string? Description { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public Guid MissionId { get; set; }
+        public Mission Mission { get; set; } = null!;
+
+        public Guid VolunteerId { get; set; }
+        public VolunteerProfile Volunteer { get; set; } = null!;
+
+        public DateTime AssignedAt { get; set; } = DateTime.UtcNow;
+        public string? RoleDescription { get; set; }
     }
 }

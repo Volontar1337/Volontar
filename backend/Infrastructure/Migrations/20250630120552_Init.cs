@@ -3,31 +3,14 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Infrastructure.Persistence.Migrations
+namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "MissionAssignments",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    OrganizationId = table.Column<string>(type: "TEXT", nullable: true),
-                    Location = table.Column<string>(type: "TEXT", nullable: true),
-                    Time = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    Description = table.Column<string>(type: "TEXT", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_MissionAssignments", x => x.Id);
-                });
-
             migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
@@ -67,7 +50,7 @@ namespace Infrastructure.Persistence.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "VolunteerProfiles",
+                name: "VolunteerProfile",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
@@ -79,9 +62,9 @@ namespace Infrastructure.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_VolunteerProfiles", x => x.Id);
+                    table.PrimaryKey("PK_VolunteerProfile", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_VolunteerProfiles_Users_UserId",
+                        name: "FK_VolunteerProfile_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -111,6 +94,44 @@ namespace Infrastructure.Persistence.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "MissionAssignments",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    MissionId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    VolunteerId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    AssignedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    RoleDescription = table.Column<string>(type: "TEXT", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MissionAssignments", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_MissionAssignments_Missions_MissionId",
+                        column: x => x.MissionId,
+                        principalTable: "Missions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_MissionAssignments_VolunteerProfile_VolunteerId",
+                        column: x => x.VolunteerId,
+                        principalTable: "VolunteerProfile",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MissionAssignments_MissionId",
+                table: "MissionAssignments",
+                column: "MissionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_MissionAssignments_VolunteerId",
+                table: "MissionAssignments",
+                column: "VolunteerId");
+
             migrationBuilder.CreateIndex(
                 name: "IX_Missions_CreatedByOrgId",
                 table: "Missions",
@@ -123,8 +144,8 @@ namespace Infrastructure.Persistence.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_VolunteerProfiles_UserId",
-                table: "VolunteerProfiles",
+                name: "IX_VolunteerProfile_UserId",
+                table: "VolunteerProfile",
                 column: "UserId",
                 unique: true);
         }
@@ -139,7 +160,7 @@ namespace Infrastructure.Persistence.Migrations
                 name: "Missions");
 
             migrationBuilder.DropTable(
-                name: "VolunteerProfiles");
+                name: "VolunteerProfile");
 
             migrationBuilder.DropTable(
                 name: "OrganizationProfiles");

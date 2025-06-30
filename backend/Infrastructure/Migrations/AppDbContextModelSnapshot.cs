@@ -3,19 +3,16 @@ using System;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Infrastructure.Persistence.Migrations
+namespace Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250630094017_InitialCreate")]
-    partial class InitialCreate
+    partial class AppDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.6");
@@ -60,22 +57,23 @@ namespace Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime>("AssignedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Description")
+                    b.Property<Guid>("MissionId")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Location")
+                    b.Property<string>("RoleDescription")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("OrganizationId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("Time")
+                    b.Property<Guid>("VolunteerId")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("MissionId");
+
+                    b.HasIndex("VolunteerId");
 
                     b.ToTable("MissionAssignments");
                 });
@@ -166,7 +164,7 @@ namespace Infrastructure.Persistence.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("VolunteerProfiles");
+                    b.ToTable("VolunteerProfile");
                 });
 
             modelBuilder.Entity("Domain.Entities.Mission", b =>
@@ -178,6 +176,25 @@ namespace Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("CreatedByOrg");
+                });
+
+            modelBuilder.Entity("Domain.Entities.MissionAssignment", b =>
+                {
+                    b.HasOne("Domain.Entities.Mission", "Mission")
+                        .WithMany()
+                        .HasForeignKey("MissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.VolunteerProfile", "Volunteer")
+                        .WithMany()
+                        .HasForeignKey("VolunteerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Mission");
+
+                    b.Navigation("Volunteer");
                 });
 
             modelBuilder.Entity("Domain.Entities.OrganizationProfile", b =>
