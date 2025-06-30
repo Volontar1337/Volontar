@@ -2,7 +2,7 @@ using System;
 
 namespace Domain.Entities
 {
-    public class Assignment
+    public class MissionAssignment
     {
         public int Id { get; set; }
         public string? OrganizationId { get; set; }

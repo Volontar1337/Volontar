@@ -14,9 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<VolunteerProfile> VolunteerProfiles => Set<VolunteerProfile>();
     public DbSet<OrganizationProfile> OrganizationProfiles => Set<OrganizationProfile>();
-
-    public DbSet<Assignment> Assignments => Set<Assignment>();
-
+    public DbSet<MissionAssignment> MissionAssignments { get; set; }
 
     public DbSet<Mission> Missions { get; set; }
 
