@@ -9,25 +9,29 @@ namespace Infrastructure.Persistence
     public static class AppDbContextSeeder
     {
         private static readonly Guid MockOrgId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        private static readonly Guid MockVolunteerId = Guid.Parse("22222222-2222-2222-2222-222222222222");
 
         public static async Task SeedAsync(AppDbContext context, ILogger logger)
         {
             var userExists = await context.Users.AnyAsync();
             var missionExists = await context.Missions.AnyAsync();
 
+            // 🏢 Seed mock organization + user
             if (!userExists)
             {
-                var user = new User
+                var orgUser = new User
                 {
                     Id = MockOrgId,
                     Email = "mock_orguser@test.com",
-                    PasswordHash = "not_relevant_for_mock",
                     Role = UserRole.Organization
                 };
 
+                var hasher = new PasswordHasher<User>();
+                orgUser.PasswordHash = hasher.HashPassword(orgUser, "supersecret123");
+
                 var orgProfile = new OrganizationProfile
                 {
-                    Id = MockOrgId,             // ✅ ID matches user and mission references
+                    Id = MockOrgId,
                     UserId = MockOrgId,
                     OrganizationName = "Mock Organization",
                     ContactPerson = "Mock Contact",
@@ -36,16 +40,14 @@ namespace Infrastructure.Persistence
                     CreatedAt = DateTime.UtcNow
                 };
 
-                var hasher = new PasswordHasher<User>();
-                user.PasswordHash = hasher.HashPassword(user, "supersecret123");
-
-                context.Users.Add(user);
+                context.Users.Add(orgUser);
                 context.OrganizationProfiles.Add(orgProfile);
-
                 await context.SaveChangesAsync();
+
                 logger.LogInformation("Seeded mock organization user.");
             }
 
+            // 🧭 Seed 3 missions
             if (!missionExists)
             {
                 var missions = new List<Mission>
@@ -86,6 +88,51 @@ namespace Infrastructure.Persistence
                 await context.SaveChangesAsync();
 
                 logger.LogInformation("Seeded mock missions.");
+            }
+
+            // 🧍 Seed volunteer and assignment
+            if (!context.Volunteers.Any() && !context.MissionAssignments.Any())
+            {
+                var volunteerUser = new User
+                {
+                    Id = MockVolunteerId,
+                    Email = "mock_volunteer@test.com",
+                    Role = UserRole.Volunteer
+                };
+
+                var hasher = new PasswordHasher<User>();
+                volunteerUser.PasswordHash = hasher.HashPassword(volunteerUser, "volunteerpass");
+
+                var volunteerProfile = new VolunteerProfile
+                {
+                    Id = MockVolunteerId,
+                    UserId = MockVolunteerId,
+                    FirstName = "Vera",
+                    LastName = "Volontär",
+                    PhoneNumber = "0701234567",
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                context.Users.Add(volunteerUser);
+                context.Volunteers.Add(volunteerProfile);
+                await context.SaveChangesAsync();
+
+                var activeMission = await context.Missions.FirstOrDefaultAsync(m => m.Title == "Active Mission");
+                if (activeMission != null)
+                {
+                    var assignment = new MissionAssignment
+                    {
+                        MissionId = activeMission.Id,
+                        VolunteerId = volunteerProfile.Id,
+                        AssignedAt = DateTime.UtcNow,
+                        RoleDescription = "Matutdelare"
+                    };
+
+                    context.MissionAssignments.Add(assignment);
+                    await context.SaveChangesAsync();
+
+                    logger.LogInformation("Seeded volunteer and mission assignment.");
+                }
             }
 
             logger.LogInformation("Database seeding complete.");

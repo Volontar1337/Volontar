@@ -1,16 +1,12 @@
 namespace Application.DTOs
 {
+    /// <summary>
+    /// DTO for creating a mission assignment (volunteer signs up for a mission).
+    /// </summary>
     public class MissionAssignmentCreateDto
     {
-        public string? Location { get; set; }
-
-        /// <summary>
-        /// Time of the assignment (in local time).
-        /// The server will convert this to UTC automatically using ToUniversalTime().
-        /// Example input: "2025-07-01T10:00:00"
-        /// </summary>
-        public DateTime Time { get; set; }
-
-        public string? Description { get; set; }
+        public Guid MissionId { get; set; }             // Mission to join
+        public Guid VolunteerId { get; set; }           // The volunteer joining
+        public string? RoleDescription { get; set; }    // Optional description (e.g. "Help desk", "Photographer")
     }
 }

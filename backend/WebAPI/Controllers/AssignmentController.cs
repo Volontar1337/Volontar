@@ -3,7 +3,7 @@ using Domain.Entities;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore; // LÄGG TILL för async .ToListAsync()
+using Microsoft.EntityFrameworkCore;
 
 namespace WebAPI.Controllers
 {
@@ -19,62 +19,76 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Organization")]
+        //[AllowAnonymous]
+        [Authorize(Roles = "Volunteer")]
         public async Task<IActionResult> CreateAssignment([FromBody] MissionAssignmentCreateDto dto)
         {
-            // Kontrollera indata
-            if (string.IsNullOrWhiteSpace(dto.Location) ||
-                string.IsNullOrWhiteSpace(dto.Description) ||
-                dto.Time == default)
-            {
-                return BadRequest("Alla fält måste vara ifyllda.");
-            }
+            // Kontroll: Finns både mission och volontär?
+            var missionExists = await _context.Missions.AnyAsync(m => m.Id == dto.MissionId);
+            var volunteerExists = await _context.Users.AnyAsync(u => u.Id == dto.VolunteerId && u.Role == Domain.Enums.UserRole.Volunteer);
 
-            // Hämta OrganizationId från claims
-            var orgIdClaim = User.Claims.FirstOrDefault(c => c.Type == "OrganizationId");
-            if (orgIdClaim == null)
-                return StatusCode(403, "Du måste vara inloggad som organisation.");
+            if (!missionExists || !volunteerExists)
+                return NotFound("Uppdrag eller volontär hittades inte.");
 
-            // Om OrganizationId är string/GUID i modellen:
+            // Skapa ny MissionAssignment
             var assignment = new MissionAssignment
             {
-                OrganizationId = orgIdClaim.Value,
-                Location = dto.Location,
-                Time = dto.Time.ToUniversalTime(),
-                Description = dto.Description
+                MissionId = dto.MissionId,
+                VolunteerId = dto.VolunteerId,
+                AssignedAt = DateTime.UtcNow,
+                RoleDescription = dto.RoleDescription
             };
 
             _context.MissionAssignments.Add(assignment);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Uppdrag skapat!", assignment.Id });
+            return Ok(new { message = "Du har anmält dig till uppdraget!", assignment.Id });
         }
 
-        // NYTT: GET /api/Assignment – Visa alla uppdrag för volontärer
         [HttpGet]
         [AllowAnonymous]
         public async Task<IActionResult> GetAllAssignments()
         {
             var assignments = await _context.MissionAssignments
-                .OrderBy(a => a.Time)
-                .ThenBy(a => a.Location)
-                .Select(a => new {
-                    a.Id,
-                    a.Location,
-                    a.Time,
-                    a.Description
-                })
+                .Include(a => a.Mission)
+                .Include(a => a.Volunteer)
+                .OrderBy(a => a.AssignedAt)
+                .Select(ma => new {
+                ma.Id,
+                MissionTitle = ma.Mission.Title,
+                VolunteerName = ma.Volunteer.FirstName + " " + ma.Volunteer.LastName,
+                VolunteerEmail = ma.Volunteer.User.Email,
+                AssignedAt = ma.AssignedAt,
+                Role = ma.RoleDescription
+            })
                 .ToListAsync();
 
             return Ok(assignments);
         }
 
-        // Endast för utveckling/felsökning
         [HttpGet("claims")]
         public IActionResult Claims()
         {
             var claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
             return Ok(claims);
+        }
+        [HttpGet("test-seed")]
+        [AllowAnonymous]
+        public async Task<IActionResult> TestSeed()
+        {
+            var result = await _context.MissionAssignments
+                .Include(ma => ma.Mission)
+                .Include(ma => ma.Volunteer)
+                .Select(ma => new {
+                    ma.Id,
+                    ma.Mission.Title,
+                    VolunteerName = ma.Volunteer.FirstName + " " + ma.Volunteer.LastName,
+                    ma.RoleDescription,
+                    ma.AssignedAt
+                })
+                .ToListAsync();
+
+            return Ok(result);
         }
     }
 }
