@@ -4,6 +4,10 @@ using Domain.Entities;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Domain.Enums;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Application.Services
 {
@@ -85,6 +89,22 @@ namespace Application.Services
 
             await _context.SaveChangesAsync();
             return AssignResult.Success;
+        }
+
+        public async Task<List<VolunteerDto>> GetVolunteersForMissionAsync(Guid missionId)
+        {
+            return await _context.MissionAssignments
+                .Where(ma => ma.MissionId == missionId)
+                .Include(ma => ma.Volunteer)
+                .ThenInclude(v => v.User)  // För att få volontärens email via User
+                .Select(ma => new VolunteerDto
+                {
+                    Id = ma.Volunteer.Id,
+                    FirstName = ma.Volunteer.FirstName,
+                    LastName = ma.Volunteer.LastName,
+                    Email = ma.Volunteer.User.Email
+                })
+                .ToListAsync();
         }
     }
 }

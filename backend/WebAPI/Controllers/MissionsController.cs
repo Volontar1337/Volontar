@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Domain.Enums;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Threading.Tasks;
 
 namespace WebAPI.Controllers
 {
@@ -84,6 +87,14 @@ namespace WebAPI.Controllers
         {
             var claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
             return Ok(claims);
+        }
+
+        // Ny endpoint: Hämta volontärer som anmält sig till mission (Task 6)
+        [HttpGet("{id}/assignments")]
+        public async Task<IActionResult> GetAssignmentsForMission(Guid id)
+        {
+            var assignments = await _missionService.GetVolunteersForMissionAsync(id);
+            return Ok(assignments);
         }
     }
 }
