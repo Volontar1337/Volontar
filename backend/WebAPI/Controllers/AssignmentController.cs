@@ -1,6 +1,6 @@
 using Application.DTOs;
 using Application.Interfaces;
-using Domain.Entities;
+using Domain.Enums;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -73,9 +73,10 @@ namespace WebAPI.Controllers
             return Ok(result);
         }
 
+        [AllowAnonymous]
         [HttpPost("assign")]
-        [Authorize(Roles = "Volunteer")]
-        public async Task<IActionResult> AssignVolunteer([FromBody] AssignMissionRequestDto dto)
+        //[Authorize(Roles = "Volunteer")]
+        public async Task<IActionResult> AssignVolunteer([FromBody] AssignMissionDto dto)
         {
             var volunteerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
@@ -84,12 +85,16 @@ namespace WebAPI.Controllers
                 return Unauthorized("Could not extract volunteer ID from token.");
             }
 
-            var success = await _missionService.AssignVolunteerToMissionAsync(dto.MissionId, volunteerId);
+            var result = await _missionService.AssignVolunteerToMissionAsync(dto.MissionId, volunteerId); // <-- DENNA MÅSTE FINNAS
 
-            if (!success)
-                return Conflict("Volunteer is already assigned to this mission.");
-
-            return Ok("Volunteer successfully assigned to mission.");
+            return result switch
+            {
+                AssignResult.Success => Ok("Volunteer successfully assigned to mission."),
+                AssignResult.AlreadyAssigned => Conflict("Volunteer already assigned."),
+                AssignResult.MissionNotFound => NotFound("Mission not found."),
+                AssignResult.VolunteerNotFound => NotFound("Volunteer not found."),
+                _ => StatusCode(500, "Unexpected error occurred.")
+            };
         }
     }
 }

@@ -60,30 +60,31 @@ namespace Application.Services
             return mission.Id;
         }
 
-        public async Task<bool> AssignVolunteerToMissionAsync(Guid missionId, Guid volunteerId)
+        public async Task<AssignResult> AssignVolunteerToMissionAsync(Guid missionId, Guid volunteerId)
         {
+            var mission = await _context.Missions.FindAsync(missionId);
+            if (mission == null)
+                return AssignResult.MissionNotFound;
+
+            var volunteer = await _context.Volunteers.FindAsync(volunteerId);
+            if (volunteer == null)
+                return AssignResult.VolunteerNotFound;
+
             var alreadyAssigned = await _context.MissionAssignments
                 .AnyAsync(ma => ma.MissionId == missionId && ma.VolunteerId == volunteerId);
 
             if (alreadyAssigned)
-            {
-                Console.WriteLine($"❌ Volunteer {volunteerId} is already assigned to mission {missionId}");
-                return false;
-            }
+                return AssignResult.AlreadyAssigned;
 
-            var assignment = new MissionAssignment
+            _context.MissionAssignments.Add(new MissionAssignment
             {
                 MissionId = missionId,
                 VolunteerId = volunteerId,
                 AssignedAt = DateTime.UtcNow
-            };
+            });
 
-            _context.MissionAssignments.Add(assignment);
             await _context.SaveChangesAsync();
-
-            Console.WriteLine($"✅ Volunteer {volunteerId} assigned to mission {missionId}");
-
-            return true;
+            return AssignResult.Success;
         }
     }
 }
