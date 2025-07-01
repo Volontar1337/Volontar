@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Domain.Enums;
+using Infrastructure.Persistence;       // <-- Viktigt!
+using Microsoft.EntityFrameworkCore;    // <-- Viktigt!
 
 namespace WebAPI.Controllers
 {
@@ -14,11 +16,16 @@ namespace WebAPI.Controllers
     {
         private readonly IMissionService _missionService;
         private readonly ILogger<MissionsController> _logger;
+        private readonly AppDbContext _context;    // <-- Lägg till
 
-        public MissionsController(IMissionService missionService, ILogger<MissionsController> logger)
+        public MissionsController(
+            IMissionService missionService,
+            ILogger<MissionsController> logger,
+            AppDbContext context)                 // <-- Lägg till
         {
             _missionService = missionService;
             _logger = logger;
+            _context = context;                   // <-- Lägg till
         }
 
         [HttpPost]
@@ -55,6 +62,26 @@ namespace WebAPI.Controllers
             var missions = await _missionService.GetMissionsByOrganizationIdAsync(orgId, status);
 
             return Ok(missions);
+        }
+
+        // Här är endpointen du ska ha med!
+        [HttpGet("{id}/assignments")]       
+        public async Task<IActionResult> GetAssignmentsForMission(Guid id)
+        {
+            var assignments = await _context.MissionAssignments
+                .Include(ma => ma.Volunteer)
+                .Where(ma => ma.MissionId == id)
+                .Select(ma => new
+                {
+                    ma.Id,
+                    ma.VolunteerId,
+                    VolunteerName = ma.Volunteer.FirstName + " " + ma.Volunteer.LastName,
+                    ma.AssignedAt,
+                    ma.RoleDescription
+                })
+                .ToListAsync();
+
+            return Ok(assignments);
         }
     }
 }

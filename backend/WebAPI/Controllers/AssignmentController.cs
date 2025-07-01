@@ -73,23 +73,16 @@ namespace WebAPI.Controllers
             return Ok(result);
         }
 
-        [HttpPost("assign")]
+        [HttpPost("{missionId}/assign")]
         [Authorize(Roles = "Volunteer")]
-        public async Task<IActionResult> AssignVolunteer([FromBody] AssignMissionRequestDto dto)
+        public async Task<IActionResult> AssignVolunteer(Guid missionId, [FromBody] AssignMissionRequestDto dto)
         {
-            var volunteerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (string.IsNullOrEmpty(volunteerIdClaim) || !Guid.TryParse(volunteerIdClaim, out var volunteerId))
-            {
-                return Unauthorized("Could not extract volunteer ID from token.");
-            }
-
-            var success = await _missionService.AssignVolunteerToMissionAsync(dto.MissionId, volunteerId);
+            var success = await _missionService.AssignVolunteerToMissionAsync(missionId, dto.VolunteerId);
 
             if (!success)
                 return Conflict("Volunteer is already assigned to this mission.");
 
             return Ok("Volunteer successfully assigned to mission.");
         }
-    }
+    } 
 }
