@@ -5,6 +5,7 @@ using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace WebAPI.Controllers
 {
@@ -20,33 +21,6 @@ namespace WebAPI.Controllers
             _context = context;
             _missionService = missionService;
         }
-
-        /*[HttpPost]
-        //[AllowAnonymous]
-        [Authorize(Roles = "Volunteer")]
-        public async Task<IActionResult> CreateAssignment([FromBody] MissionAssignmentCreateDto dto)
-        {
-            // Kontroll: Finns både mission och volontär?
-            var missionExists = await _context.Missions.AnyAsync(m => m.Id == dto.MissionId);
-            var volunteerExists = await _context.Users.AnyAsync(u => u.Id == dto.VolunteerId && u.Role == Domain.Enums.UserRole.Volunteer);
-
-            if (!missionExists || !volunteerExists)
-                return NotFound("Uppdrag eller volontär hittades inte.");
-
-            // Skapa ny MissionAssignment
-            var assignment = new MissionAssignment
-            {
-                MissionId = dto.MissionId,
-                VolunteerId = dto.VolunteerId,
-                AssignedAt = DateTime.UtcNow,
-                RoleDescription = dto.RoleDescription
-            };
-
-            _context.MissionAssignments.Add(assignment);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Du har anmält dig till uppdraget!", assignment.Id });
-        }*/
 
         [HttpGet]
         [AllowAnonymous]
@@ -76,6 +50,7 @@ namespace WebAPI.Controllers
             var claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
             return Ok(claims);
         }
+
         [HttpGet("test-seed")]
         [AllowAnonymous]
         public async Task<IActionResult> TestSeed()
@@ -97,14 +72,22 @@ namespace WebAPI.Controllers
 
             return Ok(result);
         }
+
         [HttpPost("assign")]
         [Authorize(Roles = "Volunteer")]
-        public async Task<IActionResult> AssignVolunteer([FromBody] AssignVolunteerDto dto)
+        public async Task<IActionResult> AssignVolunteer([FromBody] AssignMissionRequestDto dto)
         {
-            var success = await _missionService.AssignVolunteerToMissionAsync(dto.MissionId, dto.VolunteerId);
+            var volunteerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(volunteerIdClaim) || !Guid.TryParse(volunteerIdClaim, out var volunteerId))
+            {
+                return Unauthorized("Could not extract volunteer ID from token.");
+            }
+
+            var success = await _missionService.AssignVolunteerToMissionAsync(dto.MissionId, volunteerId);
 
             if (!success)
-                return BadRequest("Volunteer is already assigned to this mission.");
+                return Conflict("Volunteer is already assigned to this mission.");
 
             return Ok("Volunteer successfully assigned to mission.");
         }
