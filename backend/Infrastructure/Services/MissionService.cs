@@ -66,7 +66,10 @@ namespace Application.Services
                 .AnyAsync(ma => ma.MissionId == missionId && ma.VolunteerId == volunteerId);
 
             if (alreadyAssigned)
+            {
+                Console.WriteLine($"❌ Volunteer {volunteerId} is already assigned to mission {missionId}");
                 return false;
+            }
 
             var assignment = new MissionAssignment
             {
@@ -77,6 +80,8 @@ namespace Application.Services
 
             _context.MissionAssignments.Add(assignment);
             await _context.SaveChangesAsync();
+
+            Console.WriteLine($"✅ Volunteer {volunteerId} assigned to mission {missionId}");
 
             return true;
         }
