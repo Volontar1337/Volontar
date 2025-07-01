@@ -56,5 +56,34 @@ namespace WebAPI.Controllers
 
             return Ok(missions);
         }
+
+        [Authorize(Roles = "Volunteer")]
+        [HttpPost("{id}/assign")]
+        public async Task<IActionResult> AssignToMission(Guid id)
+        {
+            var volunteerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (volunteerIdClaim == null)
+                return Unauthorized("Missing volunteer ID.");
+
+            var volunteerId = Guid.Parse(volunteerIdClaim.Value);
+
+            var result = await _missionService.AssignVolunteerToMissionAsync(id, volunteerId);
+
+            return result switch
+            {
+                AssignResult.Success => Ok("Successfully assigned to mission."),
+                AssignResult.AlreadyAssigned => Conflict("Volunteer is already assigned."),
+                AssignResult.MissionNotFound => NotFound("Mission not found."),
+                AssignResult.VolunteerNotFound => NotFound("Volunteer not found."),
+                _ => StatusCode(500, "An unexpected error occurred.")
+            };
+        }
+
+        [HttpGet("claims")]
+        public IActionResult Claims()
+        {
+            var claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
+            return Ok(claims);
+        }
     }
 }
