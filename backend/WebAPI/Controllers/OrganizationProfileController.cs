@@ -29,11 +29,11 @@ public class OrganizationProfileController : ControllerBase
 
         var userId = Guid.Parse(userIdClaim);
 
-        // Kontrollera att användaren inte redan har en OrganizationProfile
-        var existing = await _context.OrganizationProfiles
-            .AnyAsync(o => o.UserId == userId);
-        if (existing)
-            return Conflict(new { message = "User already has an organization profile." });
+        // Kolla efter dubblett på organisationnamn för denna användare
+        var duplicate = await _context.OrganizationProfiles
+            .AnyAsync(o => o.UserId == userId && o.OrganizationName == dto.OrganizationName);
+        if (duplicate)
+            return Conflict(new { message = "You already have an organization with this name." });
 
         var profile = new OrganizationProfile
         {
@@ -50,6 +50,7 @@ public class OrganizationProfileController : ControllerBase
 
         return CreatedAtAction(nameof(GetProfile), new { id = profile.Id }, profile);
     }
+
 
     [HttpGet("{id}")]
     public async Task<IActionResult> GetProfile(Guid id)

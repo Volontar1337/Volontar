@@ -24,38 +24,40 @@ namespace WebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateMission([FromBody] CreateMissionDto dto)
         {
-            var orgIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (orgIdClaim == null)
-                return Unauthorized("Missing organization ID.");
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+                return Unauthorized("Missing user ID.");
 
-            var orgId = Guid.Parse(orgIdClaim.Value);
+            var userId = Guid.Parse(userIdClaim.Value);
 
-            var missionId = await _missionService.CreateMissionAsync(dto, orgId);
+            // Skicka vidare till service
+            var missionId = await _missionService.CreateMissionAsync(dto, userId);
             return Ok(new { id = missionId });
         }
 
         [HttpGet("my")]
         public async Task<IActionResult> GetMyMissions([FromQuery] MissionStatus? status)
         {
-            var orgIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (orgIdClaim == null)
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
             {
-                _logger.LogWarning("Missing organization ID claim.");
-                return Unauthorized("Missing organization ID.");
+                _logger.LogWarning("Missing user ID claim.");
+                return Unauthorized("Missing user ID.");
             }
 
-            if (!Guid.TryParse(orgIdClaim.Value, out Guid orgId))
+            if (!Guid.TryParse(userIdClaim.Value, out Guid userId))
             {
-                _logger.LogWarning("Invalid organization ID format: {OrgIdValue}", orgIdClaim.Value);
-                return Unauthorized("Invalid organization ID.");
+                _logger.LogWarning("Invalid user ID format: {UserIdValue}", userIdClaim.Value);
+                return Unauthorized("Invalid user ID.");
             }
 
-            _logger.LogInformation("Fetching missions for organization ID: {OrganizationId} with status filter: {Status}", orgId, status);
+            _logger.LogInformation("Fetching missions for user ID: {UserId} with status filter: {Status}", userId, status);
 
-            var missions = await _missionService.GetMissionsByOrganizationIdAsync(orgId, status);
+            var missions = await _missionService.GetMissionsForUserAsync(userId, status);
 
             return Ok(missions);
         }
+
 
         [HttpPost("{id}/assign")]
         public async Task<IActionResult> AssignToMission(Guid id)

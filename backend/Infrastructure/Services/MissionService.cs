@@ -20,10 +20,10 @@ namespace Application.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<MissionDto>> GetMissionsByOrganizationIdAsync(Guid organizationId, MissionStatus? status = null)
+        public async Task<IEnumerable<MissionDto>> GetMissionsForUserAsync(Guid userId, MissionStatus? status = null)
         {
             var missions = await _context.Missions
-                .Where(m => m.CreatedByOrgId == organizationId)
+                .Where(m => m.CreatedByUserId == userId)
                 .ToListAsync();
 
             if (status.HasValue)
@@ -45,17 +45,31 @@ namespace Application.Services
             });
         }
 
-        public async Task<Guid> CreateMissionAsync(CreateMissionDto dto, Guid organizationId)
+
+
+        public async Task<Guid> CreateMissionAsync(CreateMissionDto dto, Guid userId)
         {
+            // Hämta användaren (ska alltid finnas om userId kommer från claims)
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                throw new InvalidOperationException("User not found.");
+
+            // Hämta OrganizationProfile för användaren om det finns
+            var orgProfile = await _context.OrganizationProfiles
+                .Include(o => o.User)
+                .FirstOrDefaultAsync(o => o.UserId == userId);
+
             var mission = new Mission
             {
-                Id = Guid.NewGuid(),
                 Title = dto.Title,
                 Description = dto.Description,
                 Location = dto.Location,
                 StartTime = dto.StartTime,
                 EndTime = dto.EndTime,
-                CreatedByOrgId = organizationId
+                CreatedByUserId = userId,
+                CreatedByUser = user,
+                CreatedByOrgId = orgProfile?.Id,      
+                CreatedByOrg = orgProfile             
             };
 
             _context.Missions.Add(mission);
@@ -63,6 +77,7 @@ namespace Application.Services
 
             return mission.Id;
         }
+
 
         public async Task<AssignResult> AssignUserToMissionAsync(Guid missionId, Guid userId)
         {
