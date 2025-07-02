@@ -54,10 +54,27 @@ namespace Application.Services
             if (user == null)
                 throw new InvalidOperationException("User not found.");
 
-            // Hämta OrganizationProfile för användaren om det finns
-            var orgProfile = await _context.OrganizationProfiles
-                .Include(o => o.User)
-                .FirstOrDefaultAsync(o => o.UserId == userId);
+            OrganizationProfile? orgProfile = null;
+
+            // Om OrganizationId är angivet, hämta organisationen och validera att user är owner/admin
+            if (dto.OrganizationId.HasValue)
+            {
+                orgProfile = await _context.OrganizationProfiles
+                    .Include(o => o.User)
+                    .FirstOrDefaultAsync(o => o.Id == dto.OrganizationId.Value);
+
+                if (orgProfile == null)
+                    throw new InvalidOperationException("Organization not found.");
+
+                // Enkel admin-koll: användaren måste vara owner (kopplad till org)
+                if (orgProfile.UserId != userId)
+                    throw new UnauthorizedAccessException("You do not have permission to create a mission for this organization.");
+            }
+            else
+            {
+                // Skapa privat mission, organizationProfile lämnas som null
+                orgProfile = null;
+            }
 
             var mission = new Mission
             {
@@ -68,8 +85,8 @@ namespace Application.Services
                 EndTime = dto.EndTime,
                 CreatedByUserId = userId,
                 CreatedByUser = user,
-                CreatedByOrgId = orgProfile?.Id,      
-                CreatedByOrg = orgProfile             
+                CreatedByOrgId = orgProfile?.Id,       // Kan vara null!
+                CreatedByOrg = orgProfile              // Kan vara null!
             };
 
             _context.Missions.Add(mission);
@@ -77,7 +94,6 @@ namespace Application.Services
 
             return mission.Id;
         }
-
 
         public async Task<AssignResult> AssignUserToMissionAsync(Guid missionId, Guid userId)
         {
