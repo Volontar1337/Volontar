@@ -1,112 +1,109 @@
-using Application.Interfaces;
 using Application.DTOs;
+using Application.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace Infrastructure.Services;
-
-public class UserService : IUserService
+namespace Infrastructure.Services
 {
-    private readonly AppDbContext _context;
-    private readonly IPasswordHasher<User> _passwordHasher;
-
-    public UserService(AppDbContext context, IPasswordHasher<User> passwordHasher)
+    public class UserService : IUserService
     {
-        _context = context;
-        _passwordHasher = passwordHasher;
-    }
+        private readonly AppDbContext          _context;
+        private readonly IPasswordHasher<User> _passwordHasher;
+        private readonly ITokenService         _tokenService;
 
-    // Login
-    // This method authenticates a user by checking their email and password.
-    public async Task<User?> AuthenticateAsync(string email, string password)
-    {
-        // Look up user by email
-        var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
-        if (user == null)
-            return null;
-
-        // Verify hashed password
-        var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
-        if (result == PasswordVerificationResult.Success)
-            return user;
-
-        // Invalid login
-        return null;
-    }
-
-    public async Task<RegisterResponseDto> RegisterVolunteerAsync(RegisterVolunteerRequestDto dto)
-    {
-        if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+        public UserService(
+            AppDbContext context,
+            IPasswordHasher<User> passwordHasher,
+            ITokenService tokenService)
         {
-            throw new InvalidOperationException("Email is already registered.");
+            _context         = context;
+            _passwordHasher  = passwordHasher;
+            _tokenService    = tokenService;
         }
 
-        var user = new User
+        // ── LOGIN ─────────────────────────────────────────────────────
+        public async Task<User?> AuthenticateAsync(string email, string password)
         {
-            Email = dto.Email,
-            Role = UserRole.Volunteer,
-            CreatedAt = DateTime.UtcNow
-        };
+            var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
+            if (user == null) return null;
 
-        user.PasswordHash = _passwordHasher.HashPassword(user, dto.Password);
-
-        var profile = new VolunteerProfile
-        {
-            FirstName = dto.FirstName,
-            LastName = dto.LastName,
-            PhoneNumber = dto.PhoneNumber,
-            User = user
-        };
-
-        _context.Users.Add(user);
-        _context.VolunteerProfiles.Add(profile);
-
-        await _context.SaveChangesAsync();
-
-        return new RegisterResponseDto
-        {
-            UserId = user.Id,
-            Role = user.Role.ToString()
-        };
-    }
-
-    public async Task<RegisterResponseDto> RegisterOrganizationAsync(RegisterOrganizationRequestDto dto)
-    {
-        if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
-        {
-            throw new InvalidOperationException("Email is already registered.");
+            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+            return result == PasswordVerificationResult.Success ? user : null;
         }
 
-        var user = new User
+        // ── REGISTER VOLUNTEER ────────────────────────────────────────
+        public async Task<RegisterResponseDto> RegisterVolunteerAsync(RegisterVolunteerRequestDto dto)
         {
-            Email = dto.Email,
-            Role = UserRole.Organization,
-            CreatedAt = DateTime.UtcNow
-        };
+            if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+                throw new InvalidOperationException("Email is already registered.");
 
-        user.PasswordHash = _passwordHasher.HashPassword(user, dto.Password);
+            var user = new User
+            {
+                Email     = dto.Email,
+                Role      = UserRole.Volunteer,
+                CreatedAt = DateTime.UtcNow
+            };
+            user.PasswordHash = _passwordHasher.HashPassword(user, dto.Password);
 
-        var profile = new OrganizationProfile
+            var profile = new VolunteerProfile
+            {
+                FirstName   = dto.FirstName,
+                LastName    = dto.LastName,
+                PhoneNumber = dto.PhoneNumber,
+                User        = user
+            };
+
+            _context.Users.Add(user);
+            _context.VolunteerProfiles.Add(profile);
+            await _context.SaveChangesAsync();
+
+            // Generera JWT-token
+            var token = _tokenService.CreateToken(user);
+
+            return new RegisterResponseDto
+            {
+                UserId = user.Id,
+                Token  = token
+            };
+        }
+
+        // ── REGISTER ORGANIZATION ─────────────────────────────────────
+        public async Task<RegisterResponseDto> RegisterOrganizationAsync(RegisterOrganizationRequestDto dto)
         {
-            OrganizationName = dto.OrganizationName,
-            ContactPerson = dto.ContactPerson,
-            PhoneNumber = dto.PhoneNumber,
-            Website = dto.Website,
-            User = user
-        };
+            if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+                throw new InvalidOperationException("Email is already registered.");
 
-        _context.Users.Add(user);
-        _context.OrganizationProfiles.Add(profile);
+            var user = new User
+            {
+                Email     = dto.Email,
+                Role      = UserRole.Organization,
+                CreatedAt = DateTime.UtcNow
+            };
+            user.PasswordHash = _passwordHasher.HashPassword(user, dto.Password);
 
-        await _context.SaveChangesAsync();
+            var profile = new OrganizationProfile
+            {
+                OrganizationName = dto.OrganizationName,
+                ContactPerson    = dto.ContactPerson,
+                PhoneNumber      = dto.PhoneNumber,
+                Website          = dto.Website,
+                User             = user
+            };
 
-        return new RegisterResponseDto
-        {
-            UserId = user.Id,
-            Role = user.Role.ToString()
-        };
+            _context.Users.Add(user);
+            _context.OrganizationProfiles.Add(profile);
+            await _context.SaveChangesAsync();
+
+            var token = _tokenService.CreateToken(user);
+
+            return new RegisterResponseDto
+            {
+                UserId = user.Id,
+                Token  = token
+            };
+        }
     }
 }
