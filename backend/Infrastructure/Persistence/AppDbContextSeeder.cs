@@ -1,5 +1,4 @@
 using Domain.Entities;
-using Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -9,7 +8,7 @@ namespace Infrastructure.Persistence
     public static class AppDbContextSeeder
     {
         private static readonly Guid MockOrgId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-        private static readonly Guid MockVolunteerId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+        private static readonly Guid MockUserId = Guid.Parse("22222222-2222-2222-2222-222222222222");
 
         public static async Task SeedAsync(AppDbContext context, ILogger logger)
         {
@@ -23,7 +22,7 @@ namespace Infrastructure.Persistence
                 {
                     Id = MockOrgId,
                     Email = "mock_orguser@test.com",
-                    Role = UserRole.Organization
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 var hasher = new PasswordHasher<User>();
@@ -60,6 +59,7 @@ namespace Infrastructure.Persistence
                         Location = "Old Town",
                         StartTime = DateTime.UtcNow.AddDays(-10),
                         EndTime = DateTime.UtcNow.AddDays(-5),
+                        CreatedByUserId = MockOrgId,
                         CreatedByOrgId = MockOrgId
                     },
                     new Mission
@@ -70,6 +70,7 @@ namespace Infrastructure.Persistence
                         Location = "Main Square",
                         StartTime = DateTime.UtcNow.AddHours(-1),
                         EndTime = DateTime.UtcNow.AddHours(2),
+                        CreatedByUserId = MockOrgId,
                         CreatedByOrgId = MockOrgId
                     },
                     new Mission
@@ -80,6 +81,7 @@ namespace Infrastructure.Persistence
                         Location = "New District",
                         StartTime = DateTime.UtcNow.AddDays(3),
                         EndTime = DateTime.UtcNow.AddDays(5),
+                        CreatedByUserId = MockOrgId,
                         CreatedByOrgId = MockOrgId
                     }
                 };
@@ -90,31 +92,23 @@ namespace Infrastructure.Persistence
                 logger.LogInformation("Seeded mock missions.");
             }
 
-            // 🧍 Seed volunteer and assignment
-            if (!context.Volunteers.Any() && !context.MissionAssignments.Any())
+            // 👤 Seed mock user and mission assignment
+            var userExistsById = await context.Users.AnyAsync(u => u.Id == MockUserId);
+            var assignmentExists = await context.MissionAssignments.AnyAsync();
+
+            if (!userExistsById && !assignmentExists)
             {
                 var volunteerUser = new User
                 {
-                    Id = MockVolunteerId,
-                    Email = "mock_volunteer@test.com",
-                    Role = UserRole.Volunteer
+                    Id = MockUserId,
+                    Email = "mock_user@test.com",
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 var hasher = new PasswordHasher<User>();
                 volunteerUser.PasswordHash = hasher.HashPassword(volunteerUser, "volunteerpass");
 
-                var volunteerProfile = new VolunteerProfile
-                {
-                    Id = MockVolunteerId,
-                    UserId = MockVolunteerId,
-                    FirstName = "Vera",
-                    LastName = "Volontär",
-                    PhoneNumber = "0701234567",
-                    CreatedAt = DateTime.UtcNow
-                };
-
                 context.Users.Add(volunteerUser);
-                context.Volunteers.Add(volunteerProfile);
                 await context.SaveChangesAsync();
 
                 var activeMission = await context.Missions.FirstOrDefaultAsync(m => m.Title == "Active Mission");
@@ -123,15 +117,15 @@ namespace Infrastructure.Persistence
                     var assignment = new MissionAssignment
                     {
                         MissionId = activeMission.Id,
-                        VolunteerId = volunteerProfile.Id,
+                        UserId = volunteerUser.Id,
                         AssignedAt = DateTime.UtcNow,
-                        RoleDescription = "Matutdelare"
+                        RoleDescription = "Food distributor"
                     };
 
                     context.MissionAssignments.Add(assignment);
                     await context.SaveChangesAsync();
 
-                    logger.LogInformation("Seeded volunteer and mission assignment.");
+                    logger.LogInformation("Seeded user and mission assignment.");
                 }
             }
 

@@ -1,7 +1,6 @@
 using Application.Interfaces;
 using Application.DTOs;
 using Domain.Entities;
-using Domain.Enums;
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -37,41 +36,26 @@ public class UserService : IUserService
         return null;
     }
 
+    // TODO: Denna metod tas bort i steg 4 när vi förenklar registreringen
     public async Task<RegisterResponseDto> RegisterVolunteerAsync(RegisterVolunteerRequestDto dto)
     {
-        if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
-        {
-            throw new InvalidOperationException("Email is already registered.");
-        }
-
+        // OBS: Denna metod ersätts i steg 4
         var user = new User
         {
             Email = dto.Email,
-            Role = UserRole.Volunteer,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        user.PasswordHash = _passwordHasher.HashPassword(user, dto.Password);
-
-        var profile = new VolunteerProfile
-        {
-            FirstName = dto.FirstName,
-            LastName = dto.LastName,
-            PhoneNumber = dto.PhoneNumber,
-            User = user
+            CreatedAt = DateTime.UtcNow,
+            PasswordHash = _passwordHasher.HashPassword(new User(), dto.Password)
         };
 
         _context.Users.Add(user);
-        _context.VolunteerProfiles.Add(profile);
-
         await _context.SaveChangesAsync();
 
         return new RegisterResponseDto
         {
-            UserId = user.Id,
-            Role = user.Role.ToString()
+            UserId = user.Id
         };
     }
+
 
     public async Task<RegisterResponseDto> RegisterOrganizationAsync(RegisterOrganizationRequestDto dto)
     {
@@ -83,7 +67,6 @@ public class UserService : IUserService
         var user = new User
         {
             Email = dto.Email,
-            Role = UserRole.Organization,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -105,8 +88,8 @@ public class UserService : IUserService
 
         return new RegisterResponseDto
         {
-            UserId = user.Id,
-            Role = user.Role.ToString()
+            UserId = user.Id
         };
     }
+
 }
