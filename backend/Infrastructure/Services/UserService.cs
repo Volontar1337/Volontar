@@ -35,11 +35,11 @@ public class UserService : IUserService
         // Invalid login
         return null;
     }
-
-    // TODO: Denna metod tas bort i steg 4 när vi förenklar registreringen
-    public async Task<RegisterResponseDto> RegisterVolunteerAsync(RegisterVolunteerRequestDto dto)
+    public async Task<RegisterResponseDto> RegisterUserAsync(RegisterUserRequestDto dto)
     {
-        // OBS: Denna metod ersätts i steg 4
+        if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+            throw new InvalidOperationException("Email is already registered.");
+
         var user = new User
         {
             Email = dto.Email,
@@ -55,41 +55,4 @@ public class UserService : IUserService
             UserId = user.Id
         };
     }
-
-
-    public async Task<RegisterResponseDto> RegisterOrganizationAsync(RegisterOrganizationRequestDto dto)
-    {
-        if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
-        {
-            throw new InvalidOperationException("Email is already registered.");
-        }
-
-        var user = new User
-        {
-            Email = dto.Email,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        user.PasswordHash = _passwordHasher.HashPassword(user, dto.Password);
-
-        var profile = new OrganizationProfile
-        {
-            OrganizationName = dto.OrganizationName,
-            ContactPerson = dto.ContactPerson,
-            PhoneNumber = dto.PhoneNumber,
-            Website = dto.Website,
-            User = user
-        };
-
-        _context.Users.Add(user);
-        _context.OrganizationProfiles.Add(profile);
-
-        await _context.SaveChangesAsync();
-
-        return new RegisterResponseDto
-        {
-            UserId = user.Id
-        };
-    }
-
 }
