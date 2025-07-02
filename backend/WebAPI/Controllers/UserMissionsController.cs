@@ -5,27 +5,28 @@ using Infrastructure.Persistence;
 namespace WebAPI.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
-public class VolunteersController : ControllerBase
+[Route("api/users/{id}/missions")]
+public class UserMissionsController : ControllerBase
 {
     private readonly AppDbContext _context;
 
-    public VolunteersController(AppDbContext context)
+    public UserMissionsController(AppDbContext context)
     {
         _context = context;
     }
 
-    [HttpGet("{id}/missions")]
-    public async Task<IActionResult> GetMissionsForVolunteer(Guid id)
+    [HttpGet]
+    public async Task<IActionResult> GetMissionsForUser(Guid id)
     {
-        var volunteerExists = await _context.Volunteers.AnyAsync(v => v.Id == id);
-        if (!volunteerExists)
+        var userExists = await _context.Users.AnyAsync(u => u.Id == id);
+        if (!userExists)
         {
-            return NotFound(new { message = $"No volunteer found with ID {id}" });
+            return NotFound(new { message = $"No user found with ID {id}" });
         }
 
         var missions = await _context.MissionAssignments
-            .Where(ma => ma.VolunteerId == id)
+            .Include(ma => ma.Mission)
+            .Where(ma => ma.UserId == id)
             .Select(ma => new
             {
                 ma.Mission.Id,

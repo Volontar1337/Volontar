@@ -64,18 +64,18 @@ namespace Application.Services
             return mission.Id;
         }
 
-        public async Task<AssignResult> AssignVolunteerToMissionAsync(Guid missionId, Guid volunteerId)
+        public async Task<AssignResult> AssignUserToMissionAsync(Guid missionId, Guid userId)
         {
             var mission = await _context.Missions.FindAsync(missionId);
             if (mission == null)
                 return AssignResult.MissionNotFound;
 
-            var volunteer = await _context.Volunteers.FindAsync(volunteerId);
-            if (volunteer == null)
-                return AssignResult.VolunteerNotFound;
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+                return AssignResult.UserNotFound;
 
             var alreadyAssigned = await _context.MissionAssignments
-                .AnyAsync(ma => ma.MissionId == missionId && ma.VolunteerId == volunteerId);
+                .AnyAsync(ma => ma.MissionId == missionId && ma.UserId == userId);
 
             if (alreadyAssigned)
                 return AssignResult.AlreadyAssigned;
@@ -83,26 +83,26 @@ namespace Application.Services
             _context.MissionAssignments.Add(new MissionAssignment
             {
                 MissionId = missionId,
-                VolunteerId = volunteerId,
-                AssignedAt = DateTime.UtcNow
+                UserId = userId,
+                AssignedAt = DateTime.UtcNow,
+                RoleDescription = "Participant" // eller annan passande rollbeskrivning
             });
 
             await _context.SaveChangesAsync();
             return AssignResult.Success;
         }
 
-        public async Task<List<VolunteerDto>> GetVolunteersForMissionAsync(Guid missionId)
+        public async Task<List<UserDto>> GetUsersForMissionAsync(Guid missionId)
         {
             return await _context.MissionAssignments
                 .Where(ma => ma.MissionId == missionId)
-                .Include(ma => ma.Volunteer)
-                .ThenInclude(v => v.User)  // För att få volontärens email via User
-                .Select(ma => new VolunteerDto
+                .Include(ma => ma.User)
+                .Select(ma => new UserDto
                 {
-                    Id = ma.Volunteer.Id,
-                    FirstName = ma.Volunteer.FirstName,
-                    LastName = ma.Volunteer.LastName,
-                    Email = ma.Volunteer.User.Email
+                    Id = ma.User.Id,
+                    FirstName = ma.User.FirstName,
+                    LastName = ma.User.LastName,
+                    Email = ma.User.Email
                 })
                 .ToListAsync();
         }

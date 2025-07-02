@@ -31,7 +31,7 @@ public class AppDbContext : DbContext
             .HasOne(m => m.CreatedByUser)
             .WithMany()
             .HasForeignKey(m => m.CreatedByUserId);
-        
+
         // Many-to-one: MissionAssignment -> User
         modelBuilder.Entity<MissionAssignment>()
         .HasOne(ma => ma.User)

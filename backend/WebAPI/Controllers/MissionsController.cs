@@ -1,18 +1,15 @@
 using Application.Interfaces;
 using Application.DTOs;
+using Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using Domain.Enums;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Threading.Tasks;
 
 namespace WebAPI.Controllers
 {
-    [Authorize(Roles = "Organization")]
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class MissionsController : ControllerBase
     {
         private readonly IMissionService _missionService;
@@ -60,24 +57,23 @@ namespace WebAPI.Controllers
             return Ok(missions);
         }
 
-        [Authorize(Roles = "Volunteer")]
         [HttpPost("{id}/assign")]
         public async Task<IActionResult> AssignToMission(Guid id)
         {
-            var volunteerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (volunteerIdClaim == null)
-                return Unauthorized("Missing volunteer ID.");
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+                return Unauthorized("Missing user ID.");
 
-            var volunteerId = Guid.Parse(volunteerIdClaim.Value);
+            var userId = Guid.Parse(userIdClaim.Value);
 
-            var result = await _missionService.AssignVolunteerToMissionAsync(id, volunteerId);
+            var result = await _missionService.AssignUserToMissionAsync(id, userId);
 
             return result switch
             {
                 AssignResult.Success => Ok("Successfully assigned to mission."),
-                AssignResult.AlreadyAssigned => Conflict("Volunteer is already assigned."),
+                AssignResult.AlreadyAssigned => Conflict("User is already assigned."),
                 AssignResult.MissionNotFound => NotFound("Mission not found."),
-                AssignResult.VolunteerNotFound => NotFound("Volunteer not found."),
+                AssignResult.UserNotFound => NotFound("User not found."),
                 _ => StatusCode(500, "An unexpected error occurred.")
             };
         }
@@ -89,11 +85,16 @@ namespace WebAPI.Controllers
             return Ok(claims);
         }
 
-        // Ny endpoint: Hämta volontärer som anmält sig till mission (Task 6)
+        [HttpGet("test-claims")]
+        public IActionResult TestClaims()
+        {
+            return Ok("YES: claims endpoint works");
+        }
+        
         [HttpGet("{id}/assignments")]
         public async Task<IActionResult> GetAssignmentsForMission(Guid id)
         {
-            var assignments = await _missionService.GetVolunteersForMissionAsync(id);
+            var assignments = await _missionService.GetUsersForMissionAsync(id);
             return Ok(assignments);
         }
     }

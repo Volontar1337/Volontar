@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class AddAssignMissionRequest : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -18,8 +18,9 @@ namespace Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "TEXT", nullable: false),
                     Email = table.Column<string>(type: "TEXT", nullable: false),
                     PasswordHash = table.Column<string>(type: "TEXT", nullable: false),
-                    Role = table.Column<int>(type: "INTEGER", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    FirstName = table.Column<string>(type: "TEXT", nullable: false),
+                    LastName = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -50,28 +51,6 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "VolunteerProfile",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    UserId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    FirstName = table.Column<string>(type: "TEXT", nullable: false),
-                    LastName = table.Column<string>(type: "TEXT", nullable: false),
-                    PhoneNumber = table.Column<string>(type: "TEXT", nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_VolunteerProfile", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_VolunteerProfile_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Missions",
                 columns: table => new
                 {
@@ -81,7 +60,8 @@ namespace Infrastructure.Migrations
                     Location = table.Column<string>(type: "TEXT", nullable: false),
                     StartTime = table.Column<DateTime>(type: "TEXT", nullable: false),
                     EndTime = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CreatedByOrgId = table.Column<Guid>(type: "TEXT", nullable: false)
+                    CreatedByUserId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    CreatedByOrgId = table.Column<Guid>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -90,6 +70,11 @@ namespace Infrastructure.Migrations
                         name: "FK_Missions_OrganizationProfiles_CreatedByOrgId",
                         column: x => x.CreatedByOrgId,
                         principalTable: "OrganizationProfiles",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Missions_Users_CreatedByUserId",
+                        column: x => x.CreatedByUserId,
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -101,7 +86,7 @@ namespace Infrastructure.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     MissionId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    VolunteerId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    UserId = table.Column<Guid>(type: "TEXT", nullable: false),
                     AssignedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
                     RoleDescription = table.Column<string>(type: "TEXT", nullable: true)
                 },
@@ -115,9 +100,9 @@ namespace Infrastructure.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_MissionAssignments_VolunteerProfile_VolunteerId",
-                        column: x => x.VolunteerId,
-                        principalTable: "VolunteerProfile",
+                        name: "FK_MissionAssignments_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -128,9 +113,9 @@ namespace Infrastructure.Migrations
                 column: "MissionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MissionAssignments_VolunteerId",
+                name: "IX_MissionAssignments_UserId",
                 table: "MissionAssignments",
-                column: "VolunteerId");
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Missions_CreatedByOrgId",
@@ -138,14 +123,13 @@ namespace Infrastructure.Migrations
                 column: "CreatedByOrgId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OrganizationProfiles_UserId",
-                table: "OrganizationProfiles",
-                column: "UserId",
-                unique: true);
+                name: "IX_Missions_CreatedByUserId",
+                table: "Missions",
+                column: "CreatedByUserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_VolunteerProfile_UserId",
-                table: "VolunteerProfile",
+                name: "IX_OrganizationProfiles_UserId",
+                table: "OrganizationProfiles",
                 column: "UserId",
                 unique: true);
         }
@@ -158,9 +142,6 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Missions");
-
-            migrationBuilder.DropTable(
-                name: "VolunteerProfile");
 
             migrationBuilder.DropTable(
                 name: "OrganizationProfiles");
