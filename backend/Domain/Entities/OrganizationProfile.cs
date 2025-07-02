@@ -14,4 +14,6 @@ public class OrganizationProfile
     public string? Website { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public ICollection<OrganizationMember> Members { get; set; } = new List<OrganizationMember>();
+    
 }

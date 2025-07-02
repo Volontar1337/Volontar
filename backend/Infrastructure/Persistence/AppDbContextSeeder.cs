@@ -14,6 +14,7 @@ namespace Infrastructure.Persistence
         {
             var userExists = await context.Users.AnyAsync();
             var missionExists = await context.Missions.AnyAsync();
+            var organizationMemberExists = await context.OrganizationMembers.AnyAsync();
 
             // 🏢 Seed mock user + organization profile
             if (!userExists)
@@ -52,41 +53,41 @@ namespace Infrastructure.Persistence
             if (!missionExists)
             {
                 var missions = new List<Mission>
-            {
-                new Mission
                 {
-                    Id = Guid.NewGuid(),
-                    Title = "Completed Mission",
-                    Description = "This mission has already ended.",
-                    Location = "Old Town",
-                    StartTime = DateTime.UtcNow.AddDays(-10),
-                    EndTime = DateTime.UtcNow.AddDays(-5),
-                    CreatedByUserId = MockOrgUserId,
-                    CreatedByOrgId = MockOrgUserId
-                },
-                new Mission
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Active Mission",
-                    Description = "This mission is happening now.",
-                    Location = "Main Square",
-                    StartTime = DateTime.UtcNow.AddHours(-1),
-                    EndTime = DateTime.UtcNow.AddHours(2),
-                    CreatedByUserId = MockOrgUserId,
-                    CreatedByOrgId = MockOrgUserId
-                },
-                new Mission
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Upcoming Mission",
-                    Description = "This mission will happen in the future.",
-                    Location = "New District",
-                    StartTime = DateTime.UtcNow.AddDays(3),
-                    EndTime = DateTime.UtcNow.AddDays(5),
-                    CreatedByUserId = MockOrgUserId,
-                    CreatedByOrgId = MockOrgUserId
-                }
-            };
+                    new Mission
+                    {
+                        Id = Guid.NewGuid(),
+                        Title = "Completed Mission",
+                        Description = "This mission has already ended.",
+                        Location = "Old Town",
+                        StartTime = DateTime.UtcNow.AddDays(-10),
+                        EndTime = DateTime.UtcNow.AddDays(-5),
+                        CreatedByUserId = MockOrgUserId,
+                        CreatedByOrgId = MockOrgUserId
+                    },
+                    new Mission
+                    {
+                        Id = Guid.NewGuid(),
+                        Title = "Active Mission",
+                        Description = "This mission is happening now.",
+                        Location = "Main Square",
+                        StartTime = DateTime.UtcNow.AddHours(-1),
+                        EndTime = DateTime.UtcNow.AddHours(2),
+                        CreatedByUserId = MockOrgUserId,
+                        CreatedByOrgId = MockOrgUserId
+                    },
+                    new Mission
+                    {
+                        Id = Guid.NewGuid(),
+                        Title = "Upcoming Mission",
+                        Description = "This mission will happen in the future.",
+                        Location = "New District",
+                        StartTime = DateTime.UtcNow.AddDays(3),
+                        EndTime = DateTime.UtcNow.AddDays(5),
+                        CreatedByUserId = MockOrgUserId,
+                        CreatedByOrgId = MockOrgUserId
+                    }
+                };
 
                 context.Missions.AddRange(missions);
                 await context.SaveChangesAsync();
@@ -130,6 +131,39 @@ namespace Infrastructure.Persistence
                     await context.SaveChangesAsync();
 
                     logger.LogInformation("Seeded mock user and mission assignment.");
+                }
+            }
+
+            // 🧑‍🤝‍🧑 Seed OrganizationMembers
+            if (!organizationMemberExists)
+            {
+                // Hämta användare och org
+                var orgUser = await context.Users.FirstOrDefaultAsync(u => u.Id == MockOrgUserId);
+                var normalUser = await context.Users.FirstOrDefaultAsync(u => u.Id == MockUserId);
+                var orgProfile = await context.OrganizationProfiles.FirstOrDefaultAsync(o => o.UserId == MockOrgUserId);
+
+                if (orgUser != null && normalUser != null && orgProfile != null)
+                {
+                    var orgMember1 = new OrganizationMember
+                    {
+                        UserId = orgUser.Id,
+                        OrganizationProfileId = orgProfile.Id,
+                        Role = "Admin",
+                        JoinedAt = DateTime.UtcNow
+                    };
+
+                    var orgMember2 = new OrganizationMember
+                    {
+                        UserId = normalUser.Id,
+                        OrganizationProfileId = orgProfile.Id,
+                        Role = "Member",
+                        JoinedAt = DateTime.UtcNow
+                    };
+
+                    context.OrganizationMembers.AddRange(orgMember1, orgMember2);
+                    await context.SaveChangesAsync();
+
+                    logger.LogInformation("Seeded OrganizationMember entities.");
                 }
             }
 
