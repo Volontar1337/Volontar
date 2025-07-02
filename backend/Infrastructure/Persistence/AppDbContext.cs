@@ -23,18 +23,17 @@ public class AppDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // One-to-one: User -> VolunteerProfile
-        modelBuilder.Entity<User>()
-            .HasOne(u => u.VolunteerProfile)
-            .WithOne(v => v.User)
-            .HasForeignKey<VolunteerProfile>(v => v.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
-
         // One-to-one: User -> OrganizationProfile
         modelBuilder.Entity<User>()
             .HasOne(u => u.OrganizationProfile)
             .WithOne(o => o.User)
             .HasForeignKey<OrganizationProfile>(o => o.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Many-to-one: Mission -> CreatedByUser
+        modelBuilder.Entity<Mission>()
+            .HasOne(m => m.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(m => m.CreatedByUserId);
     }
 }
