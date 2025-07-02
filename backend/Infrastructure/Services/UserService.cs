@@ -19,22 +19,27 @@ namespace Infrastructure.Services
             IPasswordHasher<User> passwordHasher,
             ITokenService tokenService)
         {
-            _context         = context;
-            _passwordHasher  = passwordHasher;
-            _tokenService    = tokenService;
+            _context        = context;
+            _passwordHasher = passwordHasher;
+            _tokenService   = tokenService;
         }
 
-        // ── LOGIN ─────────────────────────────────────────────────────
         public async Task<User?> AuthenticateAsync(string email, string password)
         {
-            var user = await _context.Users.SingleOrDefaultAsync(u => u.Email == email);
-            if (user == null) return null;
+            var user = await _context.Users
+                .SingleOrDefaultAsync(u => u.Email == email);
 
-            var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
-            return result == PasswordVerificationResult.Success ? user : null;
+            if (user == null) 
+                return null;
+
+            var result = _passwordHasher
+                .VerifyHashedPassword(user, user.PasswordHash, password);
+
+            return result == PasswordVerificationResult.Success 
+                ? user 
+                : null;
         }
 
-        // ── REGISTER VOLUNTEER ────────────────────────────────────────
         public async Task<RegisterResponseDto> RegisterVolunteerAsync(RegisterVolunteerRequestDto dto)
         {
             if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
@@ -60,17 +65,15 @@ namespace Infrastructure.Services
             _context.VolunteerProfiles.Add(profile);
             await _context.SaveChangesAsync();
 
-            // Generera JWT-token
             var token = _tokenService.CreateToken(user);
 
             return new RegisterResponseDto
             {
-                UserId = user.Id,
+                UserId = user.Id,    // <–– Guid, inte string
                 Token  = token
             };
         }
 
-        // ── REGISTER ORGANIZATION ─────────────────────────────────────
         public async Task<RegisterResponseDto> RegisterOrganizationAsync(RegisterOrganizationRequestDto dto)
         {
             if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
@@ -101,7 +104,7 @@ namespace Infrastructure.Services
 
             return new RegisterResponseDto
             {
-                UserId = user.Id,
+                UserId = user.Id,    // <–– Guid, inte string
                 Token  = token
             };
         }
