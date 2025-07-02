@@ -23,15 +23,11 @@ namespace WebAPI.Controllers
         [HttpPost("login"), AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto dto)
         {
-            // Anropa din AuthenticateAsync-metod
             var user = await _userService.AuthenticateAsync(dto.Email, dto.Password);
             if (user == null)
                 return Unauthorized(new { Message = "Invalid credentials" });
 
-            // Skapa JWT
             var token = _tokenService.CreateToken(user);
-
-            // Returnera token
             return Ok(new LoginResponseDto { Token = token });
         }
 
@@ -39,12 +35,9 @@ namespace WebAPI.Controllers
         [HttpPost("register-volunteer"), AllowAnonymous]
         public async Task<IActionResult> RegisterVolunteer([FromBody] RegisterVolunteerRequestDto dto)
         {
-            // Skapa en ny volunteer via din UserService
             var result = await _userService.RegisterVolunteerAsync(dto);
-
-            // Bygg en User-instans med det nya ID:t för token-issuing
-            var user  = new User { Id = result.UserId, Email = dto.Email };
-            var token = _tokenService.CreateToken(user);
+            var user   = new User { Id = result.UserId, Email = dto.Email };
+            var token  = _tokenService.CreateToken(user);
 
             return Created(string.Empty, new RegisterResponseDto
             {
