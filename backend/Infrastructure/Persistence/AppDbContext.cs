@@ -12,6 +12,7 @@ public class AppDbContext : DbContext
 
     public DbSet<User> Users => Set<User>();
     public DbSet<OrganizationProfile> OrganizationProfiles => Set<OrganizationProfile>();
+    public DbSet<OrganizationMember> OrganizationMembers => Set<OrganizationMember>();
     public DbSet<MissionAssignment> MissionAssignments { get; set; }
     public DbSet<Mission> Missions { get; set; }
 
@@ -37,5 +38,25 @@ public class AppDbContext : DbContext
         .HasOne(ma => ma.User)
         .WithMany()
         .HasForeignKey(ma => ma.UserId);
+
+        // Ny konfiguration för OrganizationMember
+        modelBuilder.Entity<OrganizationMember>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.OrganizationMemberships)   // Navigationsproperty i User
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.OrganizationProfile)
+                .WithMany(o => o.Members)                   // Navigationsproperty i OrganizationProfile
+                .HasForeignKey(e => e.OrganizationProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(e => e.Role)
+                .IsRequired()
+                .HasMaxLength(50);
+        });
     }
 }

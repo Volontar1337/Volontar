@@ -45,6 +45,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IMissionService, MissionService>();
+builder.Services.AddScoped<IOrganizationService, OrganizationService>();
 
 // =========================
 // 4. DBContext: Environment-aware setup
