@@ -1,5 +1,4 @@
 using Application.Interfaces;
-using Application.Services;
 using Domain.Entities;
 using Infrastructure.Persistence;
 using Infrastructure.Services;
@@ -13,9 +12,7 @@ using WebAPI.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ────────────────────────────────────────────────────────────────────
-// 1. JWT BEARER AUTHENTICATION
-// ────────────────────────────────────────────────────────────────────
+// 1. JWT Bearer Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -25,7 +22,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience         = true,
             ValidateLifetime         = true,
             ValidateIssuerSigningKey = true,
-
             ValidIssuer              = builder.Configuration["Jwt:Issuer"],
             ValidAudience            = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey         = new SymmetricSecurityKey(
@@ -33,13 +29,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// ────────────────────────────────────────────────────────────────────
-// 2. SWAGGER (API-dokumentation) med JWT-stöd
-// ────────────────────────────────────────────────────────────────────
+// 2. Swagger med JWT-stöd
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    // JWT Bearer-definition
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name         = "Authorization",
@@ -49,16 +42,15 @@ builder.Services.AddSwaggerGen(c =>
         In           = ParameterLocation.Header,
         Description  = "Skriv: Bearer {din JWT-token}"
     });
-
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
             new OpenApiSecurityScheme
             {
-                Reference = new OpenApiReference 
-                { 
-                    Type = ReferenceType.SecurityScheme, 
-                    Id   = "Bearer" 
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id   = "Bearer"
                 }
             },
             Array.Empty<string>()
@@ -66,50 +58,38 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// ────────────────────────────────────────────────────────────────────
-// 3. REGISTER SERVICES
-// ────────────────────────────────────────────────────────────────────
+// 3. Registrera våra tjänster
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddScoped<IMissionService, MissionService>();
 
-// ────────────────────────────────────────────────────────────────────
-// 4. DATABASE CONTEXT
-// ────────────────────────────────────────────────────────────────────
+// 4. Databas­kontext
 var env = builder.Environment;
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     var conn = builder.Configuration.GetConnectionString("DefaultConnection")!;
-
     if (env.IsDevelopment())
         options.UseSqlite(conn, b => b.MigrationsAssembly("Infrastructure"));
     else
         options.UseSqlServer(conn, b => b.MigrationsAssembly("Infrastructure"));
 });
 
-// ────────────────────────────────────────────────────────────────────
-// 5. AUTHORIZATION & CONTROLLERS
-// ────────────────────────────────────────────────────────────────────
+// 5. Authorization & Controllers
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
-// ────────────────────────────────────────────────────────────────────
-// 6. CORS (för eventuellt annat än cookies – nu valfritt för JWT-API)
-// ────────────────────────────────────────────────────────────────────
+// 6. CORS (för JWT-API)
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
-    {
         policy.AllowAnyOrigin()
               .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
+              .AllowAnyMethod()
+    );
 });
 
-// ────────────────────────────────────────────────────────────────────
-// 7. BUILD PIPELINE
-// ────────────────────────────────────────────────────────────────────
+// 7. Bygg pipeline
 var app = builder.Build();
 
 if (env.IsDevelopment())
@@ -120,29 +100,22 @@ if (env.IsDevelopment())
 }
 
 app.UseRouting();
-
 app.UseCors();
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-
 app.UseHttpsRedirection();
 app.MapControllers();
 
-// ────────────────────────────────────────────────────────────────────
-// 8. OPTIONAL SEED DATA IN DEVELOPMENT
-// ────────────────────────────────────────────────────────────────────
+// 8. Optional seed i dev
 if (env.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var services = scope.ServiceProvider;
-    var context  = services.GetRequiredService<AppDbContext>();
+    var ctx      = services.GetRequiredService<AppDbContext>();
     var logger   = services.GetRequiredService<ILogger<Program>>();
-
-    context.Database.Migrate();
-    await AppDbContextSeeder.SeedAsync(context, logger);
+    ctx.Database.Migrate();
+    await AppDbContextSeeder.SeedAsync(ctx, logger);
 }
 
 app.Run();
