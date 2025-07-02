@@ -12,5 +12,8 @@ public class User
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+    public string FirstName { get; set; } = default!;
+    public string LastName { get; set; } = default!;
+
     public OrganizationProfile? OrganizationProfile { get; set; }
 }

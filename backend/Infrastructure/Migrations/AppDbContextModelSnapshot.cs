@@ -23,7 +23,10 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("CreatedByOrgId")
+                    b.Property<Guid?>("CreatedByOrgId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CreatedByUserId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
@@ -48,6 +51,8 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("CreatedByOrgId");
 
+                    b.HasIndex("CreatedByUserId");
+
                     b.ToTable("Missions");
                 });
 
@@ -66,14 +71,14 @@ namespace Infrastructure.Migrations
                     b.Property<string>("RoleDescription")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("VolunteerId")
+                    b.Property<Guid>("UserId")
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
                     b.HasIndex("MissionId");
 
-                    b.HasIndex("VolunteerId");
+                    b.HasIndex("UserId");
 
                     b.ToTable("MissionAssignments");
                 });
@@ -124,27 +129,6 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Role")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("Domain.Entities.VolunteerProfile", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -153,29 +137,30 @@ namespace Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("UserId")
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("VolunteerProfile");
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Domain.Entities.Mission", b =>
                 {
                     b.HasOne("Domain.Entities.OrganizationProfile", "CreatedByOrg")
                         .WithMany()
-                        .HasForeignKey("CreatedByOrgId")
+                        .HasForeignKey("CreatedByOrgId");
+
+                    b.HasOne("Domain.Entities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("CreatedByOrg");
+
+                    b.Navigation("CreatedByUser");
                 });
 
             modelBuilder.Entity("Domain.Entities.MissionAssignment", b =>
@@ -186,15 +171,15 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.VolunteerProfile", "Volunteer")
+                    b.HasOne("Domain.Entities.User", "User")
                         .WithMany()
-                        .HasForeignKey("VolunteerId")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Mission");
 
-                    b.Navigation("Volunteer");
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Domain.Entities.OrganizationProfile", b =>
@@ -208,22 +193,9 @@ namespace Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Domain.Entities.VolunteerProfile", b =>
-                {
-                    b.HasOne("Domain.Entities.User", "User")
-                        .WithOne("VolunteerProfile")
-                        .HasForeignKey("Domain.Entities.VolunteerProfile", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Domain.Entities.User", b =>
                 {
                     b.Navigation("OrganizationProfile");
-
-                    b.Navigation("VolunteerProfile");
                 });
 #pragma warning restore 612, 618
         }

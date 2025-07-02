@@ -8,9 +8,9 @@ namespace Application.Interfaces
 {
     public interface IMissionService
     {
-        Task<IEnumerable<MissionDto>> GetMissionsByOrganizationIdAsync(Guid organizationId, MissionStatus? status = null);
+        Task<IEnumerable<MissionDto>> GetMissionsForUserAsync(Guid userId, MissionStatus? status = null);
         Task<Guid> CreateMissionAsync(CreateMissionDto dto, Guid organizationId);
-        Task<AssignResult> AssignVolunteerToMissionAsync(Guid missionId, Guid volunteerId);
-        Task<List<VolunteerDto>> GetVolunteersForMissionAsync(Guid missionId);
+        Task<AssignResult> AssignUserToMissionAsync(Guid missionId, Guid userId);
+        Task<List<UserDto>> GetUsersForMissionAsync(Guid missionId);
     }
 }

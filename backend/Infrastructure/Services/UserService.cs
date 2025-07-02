@@ -19,7 +19,6 @@ public class UserService : IUserService
     }
 
     // Login
-    // This method authenticates a user by checking their email and password.
     public async Task<User?> AuthenticateAsync(string email, string password)
     {
         // Look up user by email
@@ -42,6 +41,8 @@ public class UserService : IUserService
 
         var user = new User
         {
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
             Email = dto.Email,
             CreatedAt = DateTime.UtcNow,
             PasswordHash = _passwordHasher.HashPassword(new User(), dto.Password)

@@ -1,18 +1,15 @@
 using Application.Interfaces;
 using Application.DTOs;
+using Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using Domain.Enums;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Threading.Tasks;
 
 namespace WebAPI.Controllers
 {
-    [Authorize(Roles = "Organization")]
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class MissionsController : ControllerBase
     {
         private readonly IMissionService _missionService;
@@ -27,57 +24,58 @@ namespace WebAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateMission([FromBody] CreateMissionDto dto)
         {
-            var orgIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (orgIdClaim == null)
-                return Unauthorized("Missing organization ID.");
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+                return Unauthorized("Missing user ID.");
 
-            var orgId = Guid.Parse(orgIdClaim.Value);
+            var userId = Guid.Parse(userIdClaim.Value);
 
-            var missionId = await _missionService.CreateMissionAsync(dto, orgId);
+            // Skicka vidare till service
+            var missionId = await _missionService.CreateMissionAsync(dto, userId);
             return Ok(new { id = missionId });
         }
 
         [HttpGet("my")]
         public async Task<IActionResult> GetMyMissions([FromQuery] MissionStatus? status)
         {
-            var orgIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (orgIdClaim == null)
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
             {
-                _logger.LogWarning("Missing organization ID claim.");
-                return Unauthorized("Missing organization ID.");
+                _logger.LogWarning("Missing user ID claim.");
+                return Unauthorized("Missing user ID.");
             }
 
-            if (!Guid.TryParse(orgIdClaim.Value, out Guid orgId))
+            if (!Guid.TryParse(userIdClaim.Value, out Guid userId))
             {
-                _logger.LogWarning("Invalid organization ID format: {OrgIdValue}", orgIdClaim.Value);
-                return Unauthorized("Invalid organization ID.");
+                _logger.LogWarning("Invalid user ID format: {UserIdValue}", userIdClaim.Value);
+                return Unauthorized("Invalid user ID.");
             }
 
-            _logger.LogInformation("Fetching missions for organization ID: {OrganizationId} with status filter: {Status}", orgId, status);
+            _logger.LogInformation("Fetching missions for user ID: {UserId} with status filter: {Status}", userId, status);
 
-            var missions = await _missionService.GetMissionsByOrganizationIdAsync(orgId, status);
+            var missions = await _missionService.GetMissionsForUserAsync(userId, status);
 
             return Ok(missions);
         }
 
-        [Authorize(Roles = "Volunteer")]
+
         [HttpPost("{id}/assign")]
         public async Task<IActionResult> AssignToMission(Guid id)
         {
-            var volunteerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (volunteerIdClaim == null)
-                return Unauthorized("Missing volunteer ID.");
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null)
+                return Unauthorized("Missing user ID.");
 
-            var volunteerId = Guid.Parse(volunteerIdClaim.Value);
+            var userId = Guid.Parse(userIdClaim.Value);
 
-            var result = await _missionService.AssignVolunteerToMissionAsync(id, volunteerId);
+            var result = await _missionService.AssignUserToMissionAsync(id, userId);
 
             return result switch
             {
                 AssignResult.Success => Ok("Successfully assigned to mission."),
-                AssignResult.AlreadyAssigned => Conflict("Volunteer is already assigned."),
+                AssignResult.AlreadyAssigned => Conflict("User is already assigned."),
                 AssignResult.MissionNotFound => NotFound("Mission not found."),
-                AssignResult.VolunteerNotFound => NotFound("Volunteer not found."),
+                AssignResult.UserNotFound => NotFound("User not found."),
                 _ => StatusCode(500, "An unexpected error occurred.")
             };
         }
@@ -89,11 +87,16 @@ namespace WebAPI.Controllers
             return Ok(claims);
         }
 
-        // Ny endpoint: Hämta volontärer som anmält sig till mission (Task 6)
+        [HttpGet("test-claims")]
+        public IActionResult TestClaims()
+        {
+            return Ok("YES: claims endpoint works");
+        }
+        
         [HttpGet("{id}/assignments")]
         public async Task<IActionResult> GetAssignmentsForMission(Guid id)
         {
-            var assignments = await _missionService.GetVolunteersForMissionAsync(id);
+            var assignments = await _missionService.GetUsersForMissionAsync(id);
             return Ok(assignments);
         }
     }
