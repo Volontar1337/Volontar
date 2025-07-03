@@ -2,9 +2,7 @@ namespace Application.DTOs
 {
     public class LoginResponseDto
     {
-        public string? UserId { get; set; }
-        public string? Email { get; set; }
-        public string? Role { get; set; }
+        // JWT-token som klienten skall använda i sina API-anrop
+        public string Token { get; set; } = default!;
     }
 }
-
