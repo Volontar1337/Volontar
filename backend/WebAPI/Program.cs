@@ -33,7 +33,22 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 // 2. Swagger med JWT-stöd
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
+builder.Services.AddSwaggerGen();
+
+// =========================
+// 3. ERA APPLICATION SERVICES
+// =========================
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+builder.Services.AddScoped<IMissionService, MissionService>();
+builder.Services.AddScoped<IOrganizationService, OrganizationService>();
+
+// =========================
+// 4. DBContext: Environment-aware setup
+// =========================
+var env = builder.Environment;
+
+builder.Services.AddDbContext<AppDbContext>(options =>
 {
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {

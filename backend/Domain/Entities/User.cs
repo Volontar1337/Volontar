@@ -16,4 +16,6 @@ public class User
     public string LastName { get; set; } = default!;
 
     public OrganizationProfile? OrganizationProfile { get; set; }
+    public ICollection<OrganizationMember> OrganizationMemberships { get; set; } = new List<OrganizationMember>();
+
 }

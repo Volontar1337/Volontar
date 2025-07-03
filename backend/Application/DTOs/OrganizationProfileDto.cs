@@ -11,5 +11,6 @@ namespace Application.DTOs
         public string? Website { get; set; }
 
         public UserDto? User { get; set; }
+        public List<OrganizationMemberDto> Members { get; set; } = new();
     }
 }

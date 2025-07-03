@@ -90,6 +90,7 @@ namespace Infrastructure.Services
 
             OrganizationProfile? orgProfile = null;
 
+            // Om OrganizationId är angivet, hämta organisationen och validera att user är owner/admin
             if (dto.OrganizationId.HasValue)
             {
                 orgProfile = await _context.OrganizationProfiles
@@ -99,8 +100,14 @@ namespace Infrastructure.Services
                 if (orgProfile == null)
                     throw new InvalidOperationException("Organization not found.");
 
+                // Enkel admin-koll: användaren måste vara owner (kopplad till org)
                 if (orgProfile.UserId != userId)
                     throw new UnauthorizedAccessException("You do not have permission to create a mission for this organization.");
+            }
+            else
+            {
+                // Skapa privat mission, organizationProfile lämnas som null
+                orgProfile = null;
             }
 
             var mission = new Mission
@@ -112,8 +119,8 @@ namespace Infrastructure.Services
                 EndTime = dto.EndTime,
                 CreatedByUserId = userId,
                 CreatedByUser = user,
-                CreatedByOrgId = orgProfile?.Id,
-                CreatedByOrg = orgProfile
+                CreatedByOrgId = orgProfile?.Id,       // Kan vara null!
+                CreatedByOrg = orgProfile              // Kan vara null!
             };
 
             _context.Missions.Add(mission);

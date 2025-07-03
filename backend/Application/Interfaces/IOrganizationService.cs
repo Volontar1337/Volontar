@@ -1,8 +1,14 @@
+using Application.DTOs;
+using Domain.Entities;
+
 namespace Application.Interfaces
 {
     public interface IOrganizationService
     {
-        // TODO: Lägg till metoder som ska användas t.ex.:
-        // Task<OrganizationProfileDto> GetProfileAsync(Guid userId);
+        Task<List<OrganizationProfile>> GetAllAsync();
+
+        Task<OrganizationProfile?> GetByIdAsync(Guid id);
+        Task<bool> ExistsAsync(Guid userId, string organizationName);
+        Task<OrganizationProfile?> CreateAsync(Guid userId, OrganizationProfileDto dto);
     }
 }
