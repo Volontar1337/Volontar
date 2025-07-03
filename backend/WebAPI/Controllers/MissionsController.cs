@@ -21,8 +21,11 @@ namespace WebAPI.Controllers
             _logger = logger;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetMyMissions([FromQuery] MissionStatus? status)
+        /// <summary>
+        /// Hämtar missions som har skapats av den inloggade användaren.
+        /// </summary>
+        [HttpGet("my-created")]
+        public async Task<IActionResult> GetMyCreatedMissions([FromQuery] MissionStatus? status)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (userIdClaim == null)
