@@ -4,12 +4,8 @@ using Domain.Entities;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace Application.Services
+namespace Infrastructure.Services
 {
     public class MissionService : IMissionService
     {
@@ -45,19 +41,67 @@ namespace Application.Services
             });
         }
 
+        public async Task<IEnumerable<MissionDto>> GetAllAsync()
+        {
+            var missions = await _context.Missions.ToListAsync();
 
+            return missions.Select(m => new MissionDto
+            {
+                Id = m.Id,
+                Title = m.Title,
+                Description = m.Description,
+                Location = m.Location,
+                StartTime = m.StartTime,
+                EndTime = m.EndTime,
+                Status = m.Status.ToString()
+            });
+        }
+
+        public async Task<IEnumerable<MissionDto>> GetMissionsByOrganizationIdAsync(Guid organizationId, MissionStatus? status = null)
+        {
+            var missions = await _context.Missions
+                .Where(m => m.CreatedByOrgId == organizationId)
+                .ToListAsync();
+
+            if (status.HasValue)
+            {
+                missions = missions
+                    .Where(m => m.Status == status.Value)
+                    .ToList();
+            }
+
+            return missions.Select(m => new MissionDto
+            {
+                Id = m.Id,
+                Title = m.Title,
+                Description = m.Description,
+                Location = m.Location,
+                StartTime = m.StartTime,
+                EndTime = m.EndTime,
+                Status = m.Status.ToString()
+            });
+        }
 
         public async Task<Guid> CreateMissionAsync(CreateMissionDto dto, Guid userId)
         {
-            // Hämta användaren (ska alltid finnas om userId kommer från claims)
             var user = await _context.Users.FindAsync(userId);
             if (user == null)
                 throw new InvalidOperationException("User not found.");
 
-            // Hämta OrganizationProfile för användaren om det finns
-            var orgProfile = await _context.OrganizationProfiles
-                .Include(o => o.User)
-                .FirstOrDefaultAsync(o => o.UserId == userId);
+            OrganizationProfile? orgProfile = null;
+
+            if (dto.OrganizationId.HasValue)
+            {
+                orgProfile = await _context.OrganizationProfiles
+                    .Include(o => o.User)
+                    .FirstOrDefaultAsync(o => o.Id == dto.OrganizationId.Value);
+
+                if (orgProfile == null)
+                    throw new InvalidOperationException("Organization not found.");
+
+                if (orgProfile.UserId != userId)
+                    throw new UnauthorizedAccessException("You do not have permission to create a mission for this organization.");
+            }
 
             var mission = new Mission
             {
@@ -68,8 +112,8 @@ namespace Application.Services
                 EndTime = dto.EndTime,
                 CreatedByUserId = userId,
                 CreatedByUser = user,
-                CreatedByOrgId = orgProfile?.Id,      
-                CreatedByOrg = orgProfile             
+                CreatedByOrgId = orgProfile?.Id,
+                CreatedByOrg = orgProfile
             };
 
             _context.Missions.Add(mission);
@@ -77,7 +121,6 @@ namespace Application.Services
 
             return mission.Id;
         }
-
 
         public async Task<AssignResult> AssignUserToMissionAsync(Guid missionId, Guid userId)
         {
@@ -100,26 +143,27 @@ namespace Application.Services
                 MissionId = missionId,
                 UserId = userId,
                 AssignedAt = DateTime.UtcNow,
-                RoleDescription = "Participant" // eller annan passande rollbeskrivning
+                RoleDescription = "Participant"
             });
 
             await _context.SaveChangesAsync();
             return AssignResult.Success;
         }
 
-        public async Task<List<UserDto>> GetUsersForMissionAsync(Guid missionId)
+        public async Task<IEnumerable<AssignmentDto>> GetUsersForMissionAsync(Guid missionId)
         {
-            return await _context.MissionAssignments
-                .Where(ma => ma.MissionId == missionId)
-                .Include(ma => ma.User)
-                .Select(ma => new UserDto
+            var assignments = await _context.MissionAssignments
+                .Where(a => a.MissionId == missionId)
+                .Include(a => a.User)
+                .Select(a => new AssignmentDto
                 {
-                    Id = ma.User.Id,
-                    FirstName = ma.User.FirstName,
-                    LastName = ma.User.LastName,
-                    Email = ma.User.Email
+                    UserId    = a.User.Id,
+                    Email     = a.User.Email!,
+                    AssignedAt = a.AssignedAt
                 })
                 .ToListAsync();
+
+            return assignments;
         }
     }
 }
