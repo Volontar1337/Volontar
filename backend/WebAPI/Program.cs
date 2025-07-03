@@ -10,7 +10,6 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using WebAPI.Middleware;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 // 1. JWT Bearer Authentication
@@ -27,28 +26,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience            = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey         = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
-            ClockSkew = TimeSpan.Zero // ⏱️ Gör JWT-validering striktare
+            ClockSkew = TimeSpan.Zero
         };
     });
 
 // 2. Swagger med JWT-stöd
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-// =========================
-// 3. ERA APPLICATION SERVICES
-// =========================
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
-builder.Services.AddScoped<IMissionService, MissionService>();
-builder.Services.AddScoped<IOrganizationService, OrganizationService>();
-
-// =========================
-// 4. DBContext: Environment-aware setup
-// =========================
-var env = builder.Environment;
-
-builder.Services.AddDbContext<AppDbContext>(options =>
+builder.Services.AddSwaggerGen(c =>
 {
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -110,7 +94,7 @@ builder.Services.AddCors(options =>
     else
     {
         options.AddDefaultPolicy(policy =>
-            policy.WithOrigins("https://volontarplattform.se") // Uppdatera till riktig domän
+            policy.WithOrigins("https://volontarplattform.se")
                   .AllowAnyHeader()
                   .AllowAnyMethod());
     }
