@@ -1,115 +1,331 @@
-import { Image } from "expo-image"
-import { useState } from "react"
-import { Alert, Button, StyleSheet, TextInput, View } from "react-native"
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import ParallaxScrollView from "@/components/ParallaxScrollView"
-import { ThemedText } from "@/components/ThemedText"
-import { ThemedView } from "@/components/ThemedView"
+import { Colors } from '@/constants/Colors';
+import { useAuth } from '@/contexts/AuthContext';
+import { hp, responsiveFontSize, responsiveSpacing, wp } from '@/utils/responsive';
 
 export default function HomeScreen() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const { missions, joinMission, leaveMission, user } = useAuth();
 
-  const handleLogin = async () => {
-    try {
-      const response = await fetch("https://localhost:7200/api/Auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      })
-
-      if (!response.ok) {
-        const err = await response.json()
-        Alert.alert("Login failed", err.message || "Invalid credentials.")
-        return
-      }
-
-      const data = await response.json()
-      console.log("Login success:", data)
-      Alert.alert("Success", "Logged in!")
-
-      // Store token or navigate here if needed
-    } catch (error) {
-      console.error("Login error:", error)
-      Alert.alert("Error", "Could not connect to server.")
+  const handleJoinMission = async (missionId: string) => {
+    if (!user) return;
+    
+    const mission = missions.find(m => m.id === missionId);
+    if (!mission) return;
+    
+    const isJoined = mission.participants.includes(user.id);
+    
+    if (isJoined) {
+      await leaveMission(missionId);
+    } else {
+      await joinMission(missionId);
     }
-  }
+  };
+
+  const renderMissionCard = ({ item: mission }: { item: any }) => {
+    const isJoined = user ? mission.participants.includes(user.id) : false;
+    const spotsLeft = mission.maxParticipants ? mission.maxParticipants - mission.participants.length : null;
+
+    return (
+      <View style={styles.missionCard}>
+        {/* Mission Image Placeholder */}
+        <View style={styles.missionImageContainer}>
+          <View style={styles.missionImage}>
+            <Ionicons name="image-outline" size={32} color={Colors.ui.gray} />
+          </View>
+          <View style={styles.missionImageOverlay}>
+            <Text style={styles.missionCategory}>Hjälp i hemmet</Text>
+          </View>
+        </View>
+
+        <View style={styles.missionContent}>
+          <View style={styles.missionHeader}>
+            <Text style={styles.missionTitle}>{mission.title}</Text>
+            <View style={styles.organizationBadge}>
+              <Text style={styles.organizationText}>Organisation</Text>
+            </View>
+          </View>
+
+          <Text style={styles.missionDescription} numberOfLines={3}>
+            {mission.description}
+          </Text>
+
+          <View style={styles.missionDetails}>
+            <Text style={styles.missionLocation}>📍 {mission.location}</Text>
+            <Text style={styles.missionDate}>📅 {mission.date} kl {mission.time}</Text>
+            <Text style={styles.missionCreator}>👤 {mission.createdByName}</Text>
+            {spotsLeft !== null && (
+              <Text style={styles.spotsLeft}>
+                {spotsLeft > 0 ? `${spotsLeft} platser kvar` : 'Fullt'}
+              </Text>
+            )}
+          </View>
+
+          <View style={styles.missionActions}>
+            <TouchableOpacity style={styles.viewMoreButton}>
+              <Text style={styles.viewMoreText}>Visa mer</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.joinButton,
+                isJoined ? styles.leaveButton : styles.joinButtonActive,
+                spotsLeft === 0 && !isJoined ? styles.joinButtonDisabled : null
+              ]}
+              onPress={() => handleJoinMission(mission.id)}
+              disabled={spotsLeft === 0 && !isJoined}
+            >
+              <Text style={[
+                styles.joinButtonText,
+                isJoined ? styles.leaveButtonText : styles.joinButtonActiveText
+              ]}>
+                {isJoined ? 'Lämna' : spotsLeft === 0 ? 'Fullt' : 'Anmäl dig'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  };
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
-      headerImage={
-        <Image
-          source={require("@/assets/images/partial-react-logo.png")}
-          style={styles.reactLogo}
-        />
-      }
+    <LinearGradient
+      colors={[Colors.gradient.start, Colors.gradient.middle, Colors.gradient.end]}
+      style={styles.container}
     >
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">HELP MEEEE</ThemedText>
-      </ThemedView>
+      {/* Header with gradient */}
+      <LinearGradient
+        colors={[Colors.gradient.start, Colors.gradient.middle, Colors.gradient.end]}
+        style={styles.header}
+      >
+        <Text style={styles.headerTitle}>Uppdrag</Text>
+        <Text style={styles.headerSubtitle}>Hitta uppdrag att hjälpa till med</Text>
+      </LinearGradient>
 
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Login</ThemedText>
-
-        <TextInput
-          placeholder="Email"
-          value={email}
-          onChangeText={setEmail}
-          style={styles.input}
-          autoCapitalize="none"
-        />
-        <TextInput
-          placeholder="Password"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          style={styles.input}
-        />
-        <View style={styles.button}>
-          <Button title="Login" onPress={handleLogin} />
-        </View>
-      </ThemedView>
-
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">
-          Step 2: HELP THEM OR LET THEM HELP YOUUUU
-        </ThemedText>
-        <ThemedText>
-          {`Tap the search tab to find organizations and people who wants your help`}
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  )
+      {/* Mission List */}
+      <FlatList
+        data={missions}
+        renderItem={renderMissionCard}
+        keyExtractor={(item) => item.id}
+        style={styles.missionList}
+        contentContainerStyle={styles.missionListContent}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Ionicons name="list-outline" size={48} color={Colors.ui.gray} />
+            <Text style={styles.emptyStateText}>Inga uppdrag tillgängliga</Text>
+            <Text style={styles.emptyStateSubtext}>
+              Nya uppdrag kommer att visas här när de skapas
+            </Text>
+          </View>
+        }
+        ListHeaderComponent={
+          <View style={styles.listHeader}>
+            <Text style={styles.resultsCount}>
+              {missions.length} uppdrag tillgängliga
+            </Text>
+          </View>
+        }
+      />
+    </LinearGradient>
+  );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+  container: {
+    flex: 1,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 16,
+  header: {
+    paddingTop: hp(6),
+    paddingBottom: hp(3),
+    paddingHorizontal: wp(5),
+    alignItems: 'center',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: "absolute",
+  headerTitle: {
+    fontSize: responsiveFontSize(24),
+    fontWeight: 'bold',
+    color: Colors.text.heading,
+    marginBottom: responsiveSpacing(8),
+    textAlign: 'center',
   },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    padding: 10,
-    backgroundColor: "#fff",
+  headerSubtitle: {
+    fontSize: responsiveFontSize(16),
+    color: Colors.text.body,
+    textAlign: 'center',
   },
-  button: {
-    marginTop: 10,
+  missionList: {
+    flex: 1,
   },
-})
+  missionListContent: {
+    paddingHorizontal: wp(5),
+    paddingBottom: hp(10), // Space for tab bar
+    maxWidth: 800,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  listHeader: {
+    paddingVertical: hp(2),
+  },
+  resultsCount: {
+    fontSize: responsiveFontSize(16),
+    fontWeight: '600',
+    color: Colors.text.heading,
+  },
+  missionCard: {
+    backgroundColor: Colors.ui.white,
+    borderRadius: 20,
+    marginBottom: responsiveSpacing(16),
+    shadowColor: Colors.ui.shadow,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  missionImageContainer: {
+    position: 'relative',
+    height: 120,
+  },
+  missionImage: {
+    flex: 1,
+    backgroundColor: Colors.ui.lightGray,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  missionImageOverlay: {
+    position: 'absolute',
+    top: responsiveSpacing(12),
+    left: responsiveSpacing(12),
+  },
+  missionCategory: {
+    backgroundColor: Colors.primary.orange,
+    color: Colors.ui.white,
+    fontSize: responsiveFontSize(12),
+    fontWeight: '600',
+    paddingHorizontal: responsiveSpacing(8),
+    paddingVertical: responsiveSpacing(4),
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  missionContent: {
+    padding: responsiveSpacing(16),
+  },
+  missionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: responsiveSpacing(8),
+  },
+  missionTitle: {
+    fontSize: responsiveFontSize(18),
+    fontWeight: 'bold',
+    color: Colors.text.heading,
+    flex: 1,
+    marginRight: responsiveSpacing(8),
+  },
+  organizationBadge: {
+    backgroundColor: Colors.ui.lightGray,
+    borderRadius: 12,
+    paddingHorizontal: responsiveSpacing(8),
+    paddingVertical: responsiveSpacing(4),
+  },
+  organizationText: {
+    fontSize: responsiveFontSize(12),
+    color: Colors.text.body,
+    fontWeight: '600',
+  },
+  missionDescription: {
+    fontSize: responsiveFontSize(14),
+    color: Colors.text.body,
+    lineHeight: responsiveFontSize(20),
+    marginBottom: responsiveSpacing(12),
+  },
+  missionDetails: {
+    marginBottom: responsiveSpacing(16),
+  },
+  missionLocation: {
+    fontSize: responsiveFontSize(14),
+    color: Colors.text.body,
+    marginBottom: responsiveSpacing(4),
+  },
+  missionDate: {
+    fontSize: responsiveFontSize(14),
+    color: Colors.text.body,
+    marginBottom: responsiveSpacing(4),
+  },
+  missionCreator: {
+    fontSize: responsiveFontSize(14),
+    color: Colors.text.body,
+    marginBottom: responsiveSpacing(4),
+  },
+  spotsLeft: {
+    fontSize: responsiveFontSize(14),
+    color: Colors.primary.orange,
+    fontWeight: '600',
+  },
+  missionActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  viewMoreButton: {
+    paddingVertical: responsiveSpacing(8),
+    paddingHorizontal: responsiveSpacing(12),
+  },
+  viewMoreText: {
+    fontSize: responsiveFontSize(14),
+    color: Colors.primary.blue,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  joinButton: {
+    borderRadius: 20,
+    paddingVertical: responsiveSpacing(10),
+    paddingHorizontal: responsiveSpacing(16),
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  joinButtonActive: {
+    backgroundColor: Colors.primary.blue,
+  },
+  leaveButton: {
+    backgroundColor: Colors.status.error,
+  },
+  joinButtonDisabled: {
+    backgroundColor: Colors.ui.lightGray,
+  },
+  joinButtonText: {
+    fontSize: responsiveFontSize(14),
+    fontWeight: '600',
+  },
+  joinButtonActiveText: {
+    color: Colors.ui.white,
+  },
+  leaveButtonText: {
+    color: Colors.ui.white,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: hp(8),
+  },
+  emptyStateText: {
+    fontSize: responsiveFontSize(18),
+    fontWeight: 'bold',
+    color: Colors.text.body,
+    textAlign: 'center',
+    marginTop: responsiveSpacing(16),
+  },
+  emptyStateSubtext: {
+    fontSize: responsiveFontSize(14),
+    color: Colors.text.body,
+    textAlign: 'center',
+    marginTop: responsiveSpacing(8),
+    paddingHorizontal: wp(5),
+  },
+});
