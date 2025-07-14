@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -10,8 +11,12 @@ import { hp, responsiveFontSize, responsiveSpacing, wp } from '@/utils/responsiv
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
 
-  // Check if user is organization
   const isOrganization = user?.role === 'organization';
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/onboarding'); // ✅ justera denna till rätt route om du har t.ex. /auth/welcome
+  };
 
   const functionCards = [
     { id: 1, title: 'Meddelanden', icon: 'mail-outline', color: Colors.text.heading },
@@ -27,15 +32,13 @@ export default function ProfileScreen() {
       colors={[Colors.gradient.start, Colors.gradient.middle, Colors.gradient.end]}
       style={styles.container}
     >
-      {/* Header with gradient background */}
       <LinearGradient
         colors={[Colors.gradient.start, Colors.gradient.middle, Colors.gradient.end]}
         style={styles.header}
       >
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>Min Sida</Text>
-          
-          {/* User Profile Section */}
+
           <View style={styles.userSection}>
             <View style={styles.profileImageContainer}>
               <View style={styles.profileImage}>
@@ -45,7 +48,7 @@ export default function ProfileScreen() {
                 <View style={styles.onlineIndicator} />
               </View>
             </View>
-            
+
             <View style={styles.userInfo}>
               <Text style={styles.userName}>
                 {user?.firstName} {user?.lastName}
@@ -68,12 +71,9 @@ export default function ProfileScreen() {
         </View>
       </LinearGradient>
 
-      {/* Content Area */}
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {isOrganization ? (
-          /* Organization Profile View */
           <>
-            {/* Organization Stats */}
             <View style={styles.organizationStats}>
               <View style={styles.statItem}>
                 <Text style={styles.statNumber}>12</Text>
@@ -85,7 +85,6 @@ export default function ProfileScreen() {
               </View>
             </View>
 
-            {/* Organization Presentation Card */}
             <View style={styles.presentationCard}>
               <Text style={styles.presentationTitle}>Om oss</Text>
               <Text style={styles.presentationText}>
@@ -94,14 +93,12 @@ export default function ProfileScreen() {
               </Text>
             </View>
 
-            {/* Send Message Button */}
             <TouchableOpacity style={styles.messageButton}>
               <Ionicons name="mail-outline" size={20} color={Colors.ui.white} />
               <Text style={styles.messageButtonText}>Skicka meddelande</Text>
             </TouchableOpacity>
           </>
         ) : (
-          /* Volunteer Profile View */
           <View style={styles.cardsGrid}>
             {functionCards.map((card) => (
               <TouchableOpacity key={card.id} style={styles.functionCard}>
@@ -112,13 +109,12 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* Logout Button */}
-        <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+        {/* ✅ Uppdaterad logout-knapp */}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutButtonText}>Logga ut</Text>
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Bottom Navigation Space */}
       <View style={styles.bottomSpace} />
     </LinearGradient>
   );
