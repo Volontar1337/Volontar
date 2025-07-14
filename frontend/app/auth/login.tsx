@@ -28,9 +28,7 @@ export default function LoginScreen() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<'volunteer' | 'organization'>(
-    (role as 'volunteer' | 'organization') || 'volunteer'
-  );
+  const selectedRole = 'user';
   const [error, setError] = useState('');
 
   const handleSubmit = async () => {
@@ -79,21 +77,6 @@ export default function LoginScreen() {
     }
   };
 
-  const getRoleInfo = (roleType: 'volunteer' | 'organization') => {
-    if (roleType === 'organization') {
-      return {
-        icon: 'business-outline' as const,
-        title: 'Organisation',
-        subtitle: 'Skapa uppdrag och få hjälp',
-      };
-    }
-    return {
-      icon: 'person-outline' as const,
-      title: 'Volontär',
-      subtitle: 'Hjälp andra i ditt område',
-    };
-  };
-
   return (
     <LinearGradient
       colors={[Colors.gradient.start, Colors.gradient.middle, Colors.gradient.end]}
@@ -124,42 +107,6 @@ export default function LoginScreen() {
             <Text style={styles.formTitle}>
               {isLogin ? 'Logga in' : 'Skapa konto'}
             </Text>
-
-            {/* Role Selector */}
-            {!isLogin && (
-              <View style={styles.roleSelector}>
-                <Text style={styles.roleSelectorTitle}>Välj din roll</Text>
-                <View style={styles.roleButtons}>
-                  {(['volunteer', 'organization'] as const).map((roleType) => {
-                    const roleInfo = getRoleInfo(roleType);
-                    const isSelected = selectedRole === roleType;
-                    
-                    return (
-                      <TouchableOpacity
-                        key={roleType}
-                        style={[
-                          styles.roleButton,
-                          isSelected && styles.roleButtonSelected
-                        ]}
-                        onPress={() => setSelectedRole(roleType)}
-                      >
-                        <Ionicons
-                          name={roleInfo.icon}
-                          size={24}
-                          color={isSelected ? Colors.primary.blue : Colors.text.body}
-                        />
-                        <Text style={[
-                          styles.roleButtonText,
-                          isSelected && styles.roleButtonTextSelected
-                        ]}>
-                          {roleInfo.title}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-            )}
 
             {!isLogin && (
               <>
@@ -242,8 +189,7 @@ export default function LoginScreen() {
             {isLogin && (
               <View style={styles.demoContainer}>
                 <Text style={styles.demoTitle}>Demo-konton:</Text>
-                <Text style={styles.demoText}>Volontär: john@volunteer.com</Text>
-                <Text style={styles.demoText}>Organisation: org@redcross.com</Text>
+                <Text style={styles.demoText}>Användare: neo@example.com</Text>
                 <Text style={styles.demoText}>Lösenord: password</Text>
               </View>
             )}
@@ -314,53 +260,6 @@ const styles = StyleSheet.create({
     color: Colors.text.heading,
     textAlign: 'center',
     marginBottom: hp(2),
-  },
-  roleSelector: {
-    marginBottom: responsiveSpacing(20),
-  },
-  roleSelectorTitle: {
-    fontSize: responsiveFontSize(16),
-    fontWeight: '600',
-    color: Colors.text.heading,
-    marginBottom: responsiveSpacing(12),
-    textAlign: 'center',
-  },
-  roleButtons: {
-    flexDirection: 'row',
-    gap: responsiveSpacing(12),
-  },
-  roleButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: responsiveSpacing(12),
-    paddingHorizontal: responsiveSpacing(16),
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: Colors.ui.lightGray,
-    backgroundColor: Colors.ui.white,
-    gap: responsiveSpacing(8),
-  },
-  roleButtonSelected: {
-    borderColor: Colors.primary.blue,
-    backgroundColor: Colors.gradient.start,
-    shadowColor: Colors.ui.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  roleButtonText: {
-    fontSize: responsiveFontSize(14),
-    fontWeight: '600',
-    color: Colors.text.body,
-  },
-  roleButtonTextSelected: {
-    color: Colors.primary.blue,
   },
   inputContainer: {
     flexDirection: 'row',

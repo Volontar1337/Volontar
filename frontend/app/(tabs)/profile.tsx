@@ -11,7 +11,8 @@ import { hp, responsiveFontSize, responsiveSpacing, wp } from '@/utils/responsiv
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
 
-  const isOrganization = user?.role === 'organization';
+  // 👇 Placeholder tills profilväxling är implementerad
+  const isOrganization = false; // ✅ alltid användarvy tills vidare
 
   const handleLogout = async () => {
     await logout();
