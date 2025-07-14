@@ -19,8 +19,8 @@ public class RegisterController : ControllerBase
         _context = context;
     }
 
-    [HttpPost("volunteer")]
-    public async Task<IActionResult> RegisterVolunteer([FromBody] RegisterVolunteerRequestDto dto)
+    [HttpPost]
+    public async Task<IActionResult> Register([FromBody] RegisterUserRequestDto dto)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
@@ -30,27 +30,7 @@ public class RegisterController : ControllerBase
 
         try
         {
-            var result = await _userService.RegisterVolunteerAsync(dto);
-            return Created(string.Empty, result);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { message = "An error occurred.", detail = ex.Message });
-        }
-    }
-
-    [HttpPost("organization")]
-    public async Task<IActionResult> RegisterOrganization([FromBody] RegisterOrganizationRequestDto dto)
-    {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
-            return Conflict(new { message = "Email is already in use." });
-
-        try
-        {
-            var result = await _userService.RegisterOrganizationAsync(dto);
+            var result = await _userService.RegisterUserAsync(dto);
             return Created(string.Empty, result);
         }
         catch (Exception ex)

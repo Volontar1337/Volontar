@@ -1,12 +1,31 @@
 {
   "name": "volontar-monorepo",
   "private": true,
-  "workspaces": ["frontend"],
+  "workspaces": [
+    "frontend"
+  ],
   "scripts": {
     "start": "cd frontend && npm start",
     "android": "cd frontend && npm run android",
     "ios": "cd frontend && npm run ios",
     "web": "cd frontend && npm run web",
     "lint": "cd frontend && npm run lint"
+  },
+  "main": "expo-router/entry",
+  "dependencies": {
+    "@react-native-async-storage/async-storage": "2.1.2",
+    "expo": "53.0.19",
+    "expo-constants": "~17.1.7",
+    "expo-font": "~13.3.2",
+    "expo-image": "~2.3.2",
+    "expo-linking": "~7.1.7",
+    "expo-router": "~5.1.3",
+    "expo-splash-screen": "~0.30.10",
+    "expo-system-ui": "~5.0.10",
+    "expo-web-browser": "~14.2.0",
+    "react-native": "0.79.5"
+  },
+  "devDependencies": {
+    "@react-native/js-polyfills": "^0.80.1"
   }
 }

@@ -7,8 +7,8 @@ namespace Domain.Entities
         public Guid MissionId { get; set; }
         public Mission Mission { get; set; } = null!;
 
-        public Guid VolunteerId { get; set; }
-        public VolunteerProfile Volunteer { get; set; } = null!;
+        public Guid UserId { get; set; }
+        public User User { get; set; } = null!;
 
         public DateTime AssignedAt { get; set; }
 

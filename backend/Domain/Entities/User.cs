@@ -10,11 +10,12 @@ public class User
 
     public string PasswordHash { get; set; } = string.Empty;
 
-    public UserRole Role { get; set; }
-
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    // Navigation properties
-    public VolunteerProfile? VolunteerProfile { get; set; }
+    public string FirstName { get; set; } = default!;
+    public string LastName { get; set; } = default!;
+
     public OrganizationProfile? OrganizationProfile { get; set; }
+    public ICollection<OrganizationMember> OrganizationMemberships { get; set; } = new List<OrganizationMember>();
+
 }

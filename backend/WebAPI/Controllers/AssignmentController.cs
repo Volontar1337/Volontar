@@ -1,6 +1,6 @@
 using Application.DTOs;
 using Application.Interfaces;
-using Domain.Enums;
+using Domain.Enums; // ← För AssignResult
 using Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -28,14 +28,14 @@ namespace WebAPI.Controllers
         {
             var assignments = await _context.MissionAssignments
                 .Include(a => a.Mission)
-                .Include(a => a.Volunteer)
+                .Include(a => a.User)
                 .OrderBy(a => a.AssignedAt)
                 .Select(ma => new
                 {
                     ma.Id,
                     MissionTitle = ma.Mission.Title,
-                    VolunteerName = ma.Volunteer.FirstName + " " + ma.Volunteer.LastName,
-                    VolunteerEmail = ma.Volunteer.User.Email,
+                    UserName = ma.User.FirstName + " " + ma.User.LastName,
+                    UserEmail = ma.User.Email,
                     AssignedAt = ma.AssignedAt,
                     Role = ma.RoleDescription
                 })
@@ -57,14 +57,14 @@ namespace WebAPI.Controllers
         {
             var result = await _context.MissionAssignments
                 .Include(ma => ma.Mission)
-                .Include(ma => ma.Volunteer)
+                .Include(ma => ma.User)
                 .Select(ma => new
                 {
                     ma.Id,
                     MissionId = ma.MissionId,
                     ma.Mission.Title,
-                    VolunteerId = ma.VolunteerId,
-                    VolunteerName = ma.Volunteer.FirstName + " " + ma.Volunteer.LastName,
+                    UserId = ma.UserId,
+                    UserName = ma.User.FirstName + " " + ma.User.LastName,
                     ma.RoleDescription,
                     ma.AssignedAt
                 })
@@ -75,24 +75,24 @@ namespace WebAPI.Controllers
 
         [AllowAnonymous]
         [HttpPost("assign")]
-        //[Authorize(Roles = "Volunteer")]
-        public async Task<IActionResult> AssignVolunteer([FromBody] AssignMissionDto dto)
+        //[Authorize] // Behåll Authorize om du vill att användare måste vara inloggade för att tilldela
+        public async Task<IActionResult> AssignUser([FromBody] AssignMissionDto dto)
         {
-            var volunteerIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            if (string.IsNullOrEmpty(volunteerIdClaim) || !Guid.TryParse(volunteerIdClaim, out var volunteerId))
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
             {
-                return Unauthorized("Could not extract volunteer ID from token.");
+                return Unauthorized("Could not extract user ID from token.");
             }
 
-            var result = await _missionService.AssignVolunteerToMissionAsync(dto.MissionId, volunteerId); // <-- DENNA MÅSTE FINNAS
+            var result = await _missionService.AssignUserToMissionAsync(dto.MissionId, userId);
 
             return result switch
             {
-                AssignResult.Success => Ok("Volunteer successfully assigned to mission."),
-                AssignResult.AlreadyAssigned => Conflict("Volunteer already assigned."),
+                AssignResult.Success => Ok("User successfully assigned to mission."),
+                AssignResult.AlreadyAssigned => Conflict("User already assigned."),
                 AssignResult.MissionNotFound => NotFound("Mission not found."),
-                AssignResult.VolunteerNotFound => NotFound("Volunteer not found."),
+                AssignResult.UserNotFound => NotFound("User not found."),
                 _ => StatusCode(500, "Unexpected error occurred.")
             };
         }

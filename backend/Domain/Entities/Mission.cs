@@ -30,7 +30,10 @@ namespace Domain.Entities
             }
         }
 
-        public Guid CreatedByOrgId { get; set; }
+        public Guid CreatedByUserId { get; set; }
+        public User CreatedByUser { get; set; } = null!;
+
+        public Guid? CreatedByOrgId { get; set; }
         public OrganizationProfile? CreatedByOrg { get; set; }
     }
 } 

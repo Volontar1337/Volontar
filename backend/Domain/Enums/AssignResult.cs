@@ -5,7 +5,7 @@ namespace Domain.Enums
         Success,
         AlreadyAssigned,
         MissionNotFound,
-        VolunteerNotFound,
+        UserNotFound,
         Error
     }
 }

@@ -1,6 +1,5 @@
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using Infrastructure.Persistence;
 
 namespace Infrastructure.Persistence;
 
@@ -12,23 +11,14 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<User> Users => Set<User>();
-    public DbSet<VolunteerProfile> VolunteerProfiles => Set<VolunteerProfile>();
-    public DbSet<VolunteerProfile> Volunteers { get; set; }
     public DbSet<OrganizationProfile> OrganizationProfiles => Set<OrganizationProfile>();
+    public DbSet<OrganizationMember> OrganizationMembers => Set<OrganizationMember>();
     public DbSet<MissionAssignment> MissionAssignments { get; set; }
     public DbSet<Mission> Missions { get; set; }
-
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        // One-to-one: User -> VolunteerProfile
-        modelBuilder.Entity<User>()
-            .HasOne(u => u.VolunteerProfile)
-            .WithOne(v => v.User)
-            .HasForeignKey<VolunteerProfile>(v => v.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
 
         // One-to-one: User -> OrganizationProfile
         modelBuilder.Entity<User>()
@@ -36,5 +26,37 @@ public class AppDbContext : DbContext
             .WithOne(o => o.User)
             .HasForeignKey<OrganizationProfile>(o => o.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Many-to-one: Mission -> CreatedByUser
+        modelBuilder.Entity<Mission>()
+            .HasOne(m => m.CreatedByUser)
+            .WithMany()
+            .HasForeignKey(m => m.CreatedByUserId);
+
+        // Many-to-one: MissionAssignment -> User
+        modelBuilder.Entity<MissionAssignment>()
+        .HasOne(ma => ma.User)
+        .WithMany()
+        .HasForeignKey(ma => ma.UserId);
+
+        // Ny konfiguration för OrganizationMember
+        modelBuilder.Entity<OrganizationMember>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.OrganizationMemberships)   // Navigationsproperty i User
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(e => e.OrganizationProfile)
+                .WithMany(o => o.Members)                   // Navigationsproperty i OrganizationProfile
+                .HasForeignKey(e => e.OrganizationProfileId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.Property(e => e.Role)
+                .IsRequired()
+                .HasMaxLength(50);
+        });
     }
 }

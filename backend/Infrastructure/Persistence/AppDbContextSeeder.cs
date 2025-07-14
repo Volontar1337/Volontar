@@ -1,5 +1,4 @@
 using Domain.Entities;
-using Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -8,31 +7,34 @@ namespace Infrastructure.Persistence
 {
     public static class AppDbContextSeeder
     {
-        private static readonly Guid MockOrgId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-        private static readonly Guid MockVolunteerId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+        private static readonly Guid MockOrgUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        private static readonly Guid MockUserId = Guid.Parse("22222222-2222-2222-2222-222222222222");
 
         public static async Task SeedAsync(AppDbContext context, ILogger logger)
         {
             var userExists = await context.Users.AnyAsync();
             var missionExists = await context.Missions.AnyAsync();
+            var organizationMemberExists = await context.OrganizationMembers.AnyAsync();
 
-            // 🏢 Seed mock organization + user
+            // 🏢 Seed mock user + organization profile
             if (!userExists)
             {
-                var orgUser = new User
+                var mockOrgUser = new User
                 {
-                    Id = MockOrgId,
+                    Id = MockOrgUserId,
                     Email = "mock_orguser@test.com",
-                    Role = UserRole.Organization
+                    FirstName = "Mock",
+                    LastName = "Organization",
+                    CreatedAt = DateTime.UtcNow
                 };
 
                 var hasher = new PasswordHasher<User>();
-                orgUser.PasswordHash = hasher.HashPassword(orgUser, "supersecret123");
+                mockOrgUser.PasswordHash = hasher.HashPassword(mockOrgUser, "supersecret123");
 
                 var orgProfile = new OrganizationProfile
                 {
-                    Id = MockOrgId,
-                    UserId = MockOrgId,
+                    Id = MockOrgUserId,
+                    UserId = MockOrgUserId,
                     OrganizationName = "Mock Organization",
                     ContactPerson = "Mock Contact",
                     PhoneNumber = "0700000000",
@@ -40,11 +42,11 @@ namespace Infrastructure.Persistence
                     CreatedAt = DateTime.UtcNow
                 };
 
-                context.Users.Add(orgUser);
+                context.Users.Add(mockOrgUser);
                 context.OrganizationProfiles.Add(orgProfile);
                 await context.SaveChangesAsync();
 
-                logger.LogInformation("Seeded mock organization user.");
+                logger.LogInformation("Seeded mock organization user and profile.");
             }
 
             // 🧭 Seed 3 missions
@@ -60,7 +62,8 @@ namespace Infrastructure.Persistence
                         Location = "Old Town",
                         StartTime = DateTime.UtcNow.AddDays(-10),
                         EndTime = DateTime.UtcNow.AddDays(-5),
-                        CreatedByOrgId = MockOrgId
+                        CreatedByUserId = MockOrgUserId,
+                        CreatedByOrgId = MockOrgUserId
                     },
                     new Mission
                     {
@@ -70,7 +73,8 @@ namespace Infrastructure.Persistence
                         Location = "Main Square",
                         StartTime = DateTime.UtcNow.AddHours(-1),
                         EndTime = DateTime.UtcNow.AddHours(2),
-                        CreatedByOrgId = MockOrgId
+                        CreatedByUserId = MockOrgUserId,
+                        CreatedByOrgId = MockOrgUserId
                     },
                     new Mission
                     {
@@ -80,7 +84,8 @@ namespace Infrastructure.Persistence
                         Location = "New District",
                         StartTime = DateTime.UtcNow.AddDays(3),
                         EndTime = DateTime.UtcNow.AddDays(5),
-                        CreatedByOrgId = MockOrgId
+                        CreatedByUserId = MockOrgUserId,
+                        CreatedByOrgId = MockOrgUserId
                     }
                 };
 
@@ -90,31 +95,25 @@ namespace Infrastructure.Persistence
                 logger.LogInformation("Seeded mock missions.");
             }
 
-            // 🧍 Seed volunteer and assignment
-            if (!context.Volunteers.Any() && !context.MissionAssignments.Any())
+            // 👤 Seed second user and assign to mission
+            var userExistsById = await context.Users.AnyAsync(u => u.Id == MockUserId);
+            var assignmentExists = await context.MissionAssignments.AnyAsync();
+
+            if (!userExistsById && !assignmentExists)
             {
-                var volunteerUser = new User
+                var mockUser = new User
                 {
-                    Id = MockVolunteerId,
-                    Email = "mock_volunteer@test.com",
-                    Role = UserRole.Volunteer
-                };
-
-                var hasher = new PasswordHasher<User>();
-                volunteerUser.PasswordHash = hasher.HashPassword(volunteerUser, "volunteerpass");
-
-                var volunteerProfile = new VolunteerProfile
-                {
-                    Id = MockVolunteerId,
-                    UserId = MockVolunteerId,
-                    FirstName = "Vera",
-                    LastName = "Volontär",
-                    PhoneNumber = "0701234567",
+                    Id = MockUserId,
+                    Email = "mock_user@test.com",
+                    FirstName = "Mock",
+                    LastName = "User",
                     CreatedAt = DateTime.UtcNow
                 };
 
-                context.Users.Add(volunteerUser);
-                context.Volunteers.Add(volunteerProfile);
+                var hasher = new PasswordHasher<User>();
+                mockUser.PasswordHash = hasher.HashPassword(mockUser, "mockuserpass");
+
+                context.Users.Add(mockUser);
                 await context.SaveChangesAsync();
 
                 var activeMission = await context.Missions.FirstOrDefaultAsync(m => m.Title == "Active Mission");
@@ -123,15 +122,48 @@ namespace Infrastructure.Persistence
                     var assignment = new MissionAssignment
                     {
                         MissionId = activeMission.Id,
-                        VolunteerId = volunteerProfile.Id,
+                        UserId = mockUser.Id,
                         AssignedAt = DateTime.UtcNow,
-                        RoleDescription = "Matutdelare"
+                        RoleDescription = "Support staff"
                     };
 
                     context.MissionAssignments.Add(assignment);
                     await context.SaveChangesAsync();
 
-                    logger.LogInformation("Seeded volunteer and mission assignment.");
+                    logger.LogInformation("Seeded mock user and mission assignment.");
+                }
+            }
+
+            // 🧑‍🤝‍🧑 Seed OrganizationMembers
+            if (!organizationMemberExists)
+            {
+                // Hämta användare och org
+                var orgUser = await context.Users.FirstOrDefaultAsync(u => u.Id == MockOrgUserId);
+                var normalUser = await context.Users.FirstOrDefaultAsync(u => u.Id == MockUserId);
+                var orgProfile = await context.OrganizationProfiles.FirstOrDefaultAsync(o => o.UserId == MockOrgUserId);
+
+                if (orgUser != null && normalUser != null && orgProfile != null)
+                {
+                    var orgMember1 = new OrganizationMember
+                    {
+                        UserId = orgUser.Id,
+                        OrganizationProfileId = orgProfile.Id,
+                        Role = "Admin",
+                        JoinedAt = DateTime.UtcNow
+                    };
+
+                    var orgMember2 = new OrganizationMember
+                    {
+                        UserId = normalUser.Id,
+                        OrganizationProfileId = orgProfile.Id,
+                        Role = "Member",
+                        JoinedAt = DateTime.UtcNow
+                    };
+
+                    context.OrganizationMembers.AddRange(orgMember1, orgMember2);
+                    await context.SaveChangesAsync();
+
+                    logger.LogInformation("Seeded OrganizationMember entities.");
                 }
             }
 
