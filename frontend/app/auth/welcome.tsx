@@ -13,8 +13,8 @@ import { Colors } from '@/constants/Colors';
 import { hp, responsiveFontSize, responsiveSpacing, wp } from '@/utils/responsive';
 
 export default function WelcomeScreen() {
-  const handleRoleSelection = (role: 'volunteer' | 'organization') => {
-    router.push(`/auth/login?role=${role}`);
+  const handleGoToRegister = () => {
+    router.push('/auth/login');
   };
 
   return (
@@ -28,34 +28,21 @@ export default function WelcomeScreen() {
           <VolontarLogo size={Math.min(wp(25), 160)} showText={true} />
         </View>
 
-        {/* Welcome text */}
+        {/* Welcome title only */}
         <View style={styles.welcomeContainer}>
           <Text style={styles.welcomeTitle}>Välkommen!</Text>
-          <Text style={styles.welcomeSubtitle}>Vad vill du göra?</Text>
         </View>
 
-        {/* Role selection buttons */}
+        {/* Single user creation button */}
         <View style={styles.roleContainer}>
           <TouchableOpacity
             style={styles.roleButton}
-            onPress={() => handleRoleSelection('volunteer')}
+            onPress={handleGoToRegister}
           >
             <View style={styles.roleIcon}>
               <Text style={styles.roleIconText}>👤</Text>
             </View>
-            <Text style={styles.roleTitle}>Volontär</Text>
-            <Text style={styles.roleDescription}>Jag vill hjälpa andra</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.roleButton}
-            onPress={() => handleRoleSelection('organization')}
-          >
-            <View style={styles.roleIcon}>
-              <Text style={styles.roleIconText}>🏢</Text>
-            </View>
-            <Text style={styles.roleTitle}>Organisation</Text>
-            <Text style={styles.roleDescription}>Jag behöver hjälp</Text>
+            <Text style={styles.roleTitle}>Användare</Text>
           </TouchableOpacity>
         </View>
 
@@ -89,31 +76,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: hp(5),
   },
-  logoPlaceholder: {
-    width: Math.min(wp(30), 120),
-    height: Math.min(wp(30), 120),
-    borderRadius: Math.min(wp(15), 60),
-    backgroundColor: Colors.ui.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: Colors.ui.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  logoText: {
-    fontSize: responsiveFontSize(40),
-  },
-  logoTitle: {
-    fontSize: responsiveFontSize(28),
-    fontWeight: 'bold',
-    color: Colors.ui.white,
-    marginTop: responsiveSpacing(12),
-  },
   welcomeContainer: {
     alignItems: 'center',
     marginTop: hp(3),
@@ -124,15 +86,10 @@ const styles = StyleSheet.create({
     color: Colors.text.heading,
     textAlign: 'center',
   },
-  welcomeSubtitle: {
-    fontSize: responsiveFontSize(18),
-    color: Colors.text.body,
-    textAlign: 'center',
-    marginTop: responsiveSpacing(8),
-  },
   roleContainer: {
     width: '100%',
     alignItems: 'center',
+    marginTop: hp(4),
     gap: responsiveSpacing(20),
   },
   roleButton: {

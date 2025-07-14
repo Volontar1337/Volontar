@@ -4,7 +4,7 @@ export interface User {
   email: string;
   firstName: string;
   lastName: string;
-  role: 'volunteer' | 'organization';
+  role: 'user';
 }
 
 // Mission Types
@@ -27,7 +27,7 @@ export interface RegisterData {
   password: string;
   firstName: string;
   lastName: string;
-  role: 'volunteer' | 'organization';
+  role: 'user';
 }
 
 export interface CreateMissionData {
