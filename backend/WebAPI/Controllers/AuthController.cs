@@ -4,6 +4,9 @@ using Application.DTOs;
 using Application.Interfaces;
 using Domain.Entities;
 using System.Security.Claims;
+using Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+
 
 namespace WebAPI.Controllers
 {
@@ -13,11 +16,13 @@ namespace WebAPI.Controllers
     {
         private readonly IUserService _userService;
         private readonly ITokenService _tokenService;
+        private readonly AppDbContext _context;
 
-        public AuthController(IUserService userService, ITokenService tokenService)
+        public AuthController(IUserService userService, ITokenService tokenService, AppDbContext context)
         {
             _userService = userService;
             _tokenService = tokenService;
+            _context = context;
         }
 
         // ── LOGIN ─────────────────────────────────────────────────────
@@ -31,11 +36,21 @@ namespace WebAPI.Controllers
 
             var token = _tokenService.CreateToken(user);
 
+            var createdOrganizations = await _context.OrganizationProfiles
+                .Where(o => o.UserId == user.Id)
+                .Select(o => new SimpleOrganizationDto
+                {
+                    Id = o.Id,
+                    Name = o.OrganizationName
+                })
+                .ToListAsync();
+
             var response = new LoginResponseDto
             {
                 UserId = user.Id,
                 Email = user.Email,
-                Token = token
+                Token = token,
+                CreatedOrganizations = createdOrganizations
             };
 
             return Ok(response);

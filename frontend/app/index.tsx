@@ -11,11 +11,11 @@ export default function IndexScreen() {
   useEffect(() => {
     if (!isLoading) {
       if (isAuthenticated) {
-        // User is logged in, go to main app
-        router.replace('/(tabs)');
+        // ✅ Inloggad → till profil
+        router.replace('/(tabs)/profile');
       } else {
-        // User is not logged in, start with onboarding
-        router.replace('/onboarding');
+        // 🚪 Inte inloggad → till login eller onboarding
+        router.replace('/auth/login');
       }
     }
   }, [isAuthenticated, isLoading]);

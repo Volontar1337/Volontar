@@ -3,6 +3,8 @@ import React, { createContext, ReactNode, useContext, useEffect, useState } from
 
 import { CreateMissionData, Mission, RegisterData, User } from '@/types';
 
+import axios from 'axios';
+
 interface AuthContextType {
   // Auth state
   user: User | null;
@@ -36,6 +38,7 @@ const mockUsers: User[] = [
     firstName: 'Thomas',
     lastName: 'Andersson',
     role: 'user',
+    createdOrganizations: []
   },
 ];
 
@@ -89,7 +92,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  /*const login = async (email: string, password: string): Promise<boolean> => {
     try {
       // Mock login - check against mock users
       const foundUser = mockUsers.find(u => u.email === email);
@@ -99,6 +102,23 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return true;
       }
       return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
+    }
+  };*/
+
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const response = await axios.post('http://192.168.1.235:5102/api/auth/login', {
+        email,
+        password,
+      });
+
+      const userData = response.data;
+      setUser(userData);
+      await AsyncStorage.setItem('user', JSON.stringify(userData));
+      return true;
     } catch (error) {
       console.error('Login error:', error);
       return false;

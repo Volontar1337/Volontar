@@ -1,3 +1,8 @@
+export interface SimpleOrganization {
+  id: string;
+  name: string;
+}
+
 // User Types
 export interface User {
   id: string;
@@ -5,6 +10,8 @@ export interface User {
   firstName: string;
   lastName: string;
   role: 'user';
+
+  createdOrganizations?: SimpleOrganization[];
 }
 
 // Mission Types

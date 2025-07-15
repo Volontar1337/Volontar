@@ -33,7 +33,7 @@ export default function LoginScreen() {
 
   const handleSubmit = async () => {
     setError('');
-    
+
     if (!email || !password) {
       setError('Vänligen fyll i alla fält');
       return;
@@ -45,16 +45,20 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
+    console.log('🔐 handleSubmit start');
 
     try {
       let success = false;
 
       if (isLogin) {
+        console.log('➡️ Försöker logga in med:', email);
         success = await login(email, password);
+        console.log('✅ login() returned:', success);
         if (!success) {
           setError('Fel email eller lösenord');
         }
       } else {
+        console.log('➡️ Försöker registrera ny användare');
         success = await register({
           email,
           password,
@@ -62,20 +66,26 @@ export default function LoginScreen() {
           lastName,
           role: selectedRole,
         });
+        console.log('✅ register() returned:', success);
         if (!success) {
           setError('Registrering misslyckades');
         }
       }
 
       if (success) {
-        router.replace('/(tabs)');
+        console.log('➡️ Navigerar till /profile');
+        setLoading(false);
+        router.replace('/(tabs)/profile');
+        return;
       }
     } catch (error) {
+      console.error('❌ Något gick fel i handleSubmit:', error);
       setError('Något gick fel, försök igen');
-    } finally {
-      setLoading(false);
     }
+
+    setLoading(false); // Lägg till denna även om inget lyckas
   };
+
 
   return (
     <LinearGradient

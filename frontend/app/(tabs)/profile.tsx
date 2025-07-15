@@ -7,9 +7,11 @@ import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-nati
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/contexts/AuthContext';
 import { hp, responsiveFontSize, responsiveSpacing, wp } from '@/utils/responsive';
+import { useState } from 'react';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
+  const [activeView, setActiveView] = useState<'user' | string>('user');
 
   // 👇 Placeholder tills profilväxling är implementerad
   const isOrganization = false; // ✅ alltid användarvy tills vidare
@@ -52,8 +54,30 @@ export default function ProfileScreen() {
 
             <View style={styles.userInfo}>
               <Text style={styles.userName}>
-                {user?.firstName} {user?.lastName}
+                {activeView === 'user'
+                  ? `${user?.firstName} ${user?.lastName}`
+                  : user?.createdOrganizations?.find(org => org.id === activeView)?.name}
               </Text>
+
+              {/* Dropdown – visas bara om användaren har organisationer */}
+              {user?.createdOrganizations && user.createdOrganizations.length > 0 && (
+                <View style={{ marginTop: 6 }}>
+                  <TouchableOpacity onPress={() => setActiveView('user')}>
+                    <Text style={{ color: activeView === 'user' ? 'blue' : 'black' }}>
+                      👤 Växla till personligt konto
+                    </Text>
+                  </TouchableOpacity>
+
+                  {user.createdOrganizations.map(org => (
+                    <TouchableOpacity key={org.id} onPress={() => setActiveView(org.id)}>
+                      <Text style={{ color: activeView === org.id ? 'blue' : 'black' }}>
+                        🏢 {org.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
               <View style={styles.statusContainer}>
                 <Ionicons name="checkmark-circle" size={16} color={Colors.status.success} />
                 <Text style={styles.statusText}>Öppen för nya uppdrag</Text>
@@ -68,6 +92,7 @@ export default function ProfileScreen() {
               </View>
               <Text style={styles.completedTasks}>✓ Avslutade uppdrag: 8/8</Text>
             </View>
+
           </View>
         </View>
       </LinearGradient>
