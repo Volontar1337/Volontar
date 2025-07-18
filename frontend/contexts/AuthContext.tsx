@@ -1,6 +1,6 @@
+console.log('🧠 AuthContext file loaded!');
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-
 import { CreateMissionData, Mission, RegisterData, User } from '@/types';
 
 interface AuthContextType {
@@ -13,6 +13,9 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   register: (userData: RegisterData) => Promise<boolean>;
   logout: () => Promise<void>;
+
+  activeView: 'user' | string;
+  setActiveView: (view: 'user' | string) => Promise<void>;
   
   // Mission state (mock data)
   missions: Mission[];
@@ -36,6 +39,10 @@ const mockUsers: User[] = [
     firstName: 'Thomas',
     lastName: 'Andersson',
     role: 'user',
+    createdOrganizations: [
+      { id: 'org1', name: 'Rädda Barnen' },
+      { id: 'org2', name: 'Naturskyddsföreningen' }
+    ]
   },
 ];
 
@@ -70,24 +77,40 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [missions, setMissions] = useState<Mission[]>(mockMissions);
+  const [activeView, setActiveViewState] = useState<'user' | string>('user');
 
   // Load user from storage on app start
   useEffect(() => {
+    console.log('🔁 useEffect triggered in AuthProvider!');
     loadUserFromStorage();
   }, []);
 
   const loadUserFromStorage = async () => {
+    console.log('📥 loadUserFromStorage called');
     try {
+      console.log('🔄 Loading user from AsyncStorage...');
       const userData = await AsyncStorage.getItem('user');
+      const storedView = await AsyncStorage.getItem('activeView');
+
       if (userData) {
+        console.log('✅ User found in storage');
         setUser(JSON.parse(userData));
+      } else {
+        console.log('❌ No user found');
+      }
+
+      if (storedView) {
+        console.log(`🌐 ActiveView loaded: ${storedView}`);
+        setActiveViewState(storedView as 'user' | string);
       }
     } catch (error) {
-      console.error('Error loading user from storage:', error);
+      console.error('Error loading user or activeView from storage:', error);
     } finally {
+      console.log('✅ AuthContext: Finished loading');
       setIsLoading(false);
     }
   };
+
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -104,6 +127,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return false;
     }
   };
+
+  const setActiveView = async (view: 'user' | string) => {
+    try {
+      setActiveViewState(view);
+      await AsyncStorage.setItem('activeView', view);
+    } catch (error) {
+      console.error('Failed to save active view:', error);
+    }
+  };
+
 
   const register = async (userData: RegisterData): Promise<boolean> => {
     try {
@@ -129,11 +162,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = async (): Promise<void> => {
     try {
       setUser(null);
-      await AsyncStorage.removeItem('user');
+      setActiveViewState('user'); // Återställ till personlig vy lokalt
+      await AsyncStorage.multiRemove(['user', 'activeView']); // Rensa båda från lagring
     } catch (error) {
       console.error('Logout error:', error);
     }
   };
+
 
   const createMission = async (missionData: CreateMissionData): Promise<boolean> => {
     try {
@@ -213,6 +248,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     login,
     register,
     logout,
+    activeView,
+    setActiveView,
     missions,
     userMissions,
     createMission,
