@@ -23,7 +23,8 @@
     "expo-splash-screen": "~0.30.10",
     "expo-system-ui": "~5.0.10",
     "expo-web-browser": "~14.2.0",
-    "react-native": "0.79.5"
+    "react-native": "0.79.5",
+    "@react-native-picker/picker": "2.11.1"
   },
   "devDependencies": {
     "@react-native/js-polyfills": "^0.80.1"

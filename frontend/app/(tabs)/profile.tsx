@@ -1,18 +1,20 @@
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
-import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
 import { Colors } from '@/constants/Colors';
 import { useAuth } from '@/contexts/AuthContext';
 import { hp, responsiveFontSize, responsiveSpacing, wp } from '@/utils/responsive';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, activeView, setActiveView } = useAuth();
+
+  const [showDropdown, setShowDropdown] = useState(false);
 
   // 👇 Placeholder tills profilväxling är implementerad
-  const isOrganization = false; // ✅ alltid användarvy tills vidare
+  const isOrganization = activeView !== 'user';
+
 
   const handleLogout = async () => {
     await logout();
@@ -44,15 +46,19 @@ export default function ProfileScreen() {
             <View style={styles.profileImageContainer}>
               <View style={styles.profileImage}>
                 <Text style={styles.profileInitials}>
-                  {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                  <Text>
+                    {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                  </Text>
                 </Text>
-                <View style={styles.onlineIndicator} />
+                <View style={styles.onlineIndicator}></View>
               </View>
             </View>
 
             <View style={styles.userInfo}>
               <Text style={styles.userName}>
-                {user?.firstName} {user?.lastName}
+                <Text>
+                  {user ? `${user.firstName} ${user.lastName}` : ''}
+                </Text>
               </Text>
               <View style={styles.statusContainer}>
                 <Ionicons name="checkmark-circle" size={16} color={Colors.status.success} />
@@ -71,7 +77,69 @@ export default function ProfileScreen() {
           </View>
         </View>
       </LinearGradient>
+      
+      <View style={{ paddingHorizontal: 20, marginBottom: 20 }}>
+        <Text style={{ fontWeight: '600', fontSize: 16, color: Colors.text.heading, marginBottom: 8 }}>
+          Aktiv vy:
+        </Text>
+        <View style={{ backgroundColor: Colors.ui.white, borderRadius: 10, marginVertical: 10 }}>
+          <View style={{ marginVertical: 10 }}>
+            <TouchableOpacity
+              onPress={() => setShowDropdown(!showDropdown)}
+              style={{
+                padding: 12,
+                backgroundColor: Colors.ui.white,
+                borderRadius: 10,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ fontSize: 16 }}>
+                {activeView === 'user'
+                  ? 'Personlig vy'
+                  : user?.createdOrganizations?.find((org) => org.id === activeView)?.name ?? 'Okänd vy'}
+              </Text>
+              <Text style={{ fontSize: 16 }}>▼</Text>
+            </TouchableOpacity>
 
+            {showDropdown && (
+              <View
+                style={{
+                  marginTop: 4,
+                  backgroundColor: Colors.ui.white,
+                  borderRadius: 10,
+                  paddingVertical: 8,
+                  elevation: 3,
+                }}
+              >
+                <TouchableOpacity
+                  onPress={() => {
+                    setActiveView('user');
+                    setShowDropdown(false);
+                  }}
+                  style={{ paddingVertical: 8, paddingHorizontal: 12 }}
+                >
+                  <Text>Personlig vy</Text>
+                </TouchableOpacity>
+
+                {user?.createdOrganizations?.map((org) => (
+                  <TouchableOpacity
+                    key={org.id}
+                    onPress={() => {
+                      setActiveView(org.id);
+                      setShowDropdown(false);
+                    }}
+                    style={{ paddingVertical: 8, paddingHorizontal: 12 }}
+                  >
+                    <Text>{org.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+        </View>
+      </View>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {isOrganization ? (
           <>
