@@ -55,11 +55,50 @@ export default function ProfileScreen() {
             </View>
 
             <View style={styles.userInfo}>
-              <Text style={styles.userName}>
-                <Text>
-                  {user ? `${user.firstName} ${user.lastName}` : ''}
+              <TouchableOpacity onPress={() => setShowDropdown(!showDropdown)}>
+                <Text style={styles.userName}>
+                  {activeView === 'user'
+                    ? `${user?.firstName} ${user?.lastName}`
+                    : user?.authorizedOrganizations?.find((org) => org.id === activeView)?.name ?? 'Okänd vy'} ▼
                 </Text>
-              </Text>
+              </TouchableOpacity>
+
+              {showDropdown && (
+                <View
+                  style={{
+                    backgroundColor: Colors.ui.white,
+                    borderRadius: 10,
+                    paddingVertical: 8,
+                    marginTop: 8,
+                    elevation: 3,
+                    zIndex: 10,
+                  }}
+                >
+                  <TouchableOpacity
+                    onPress={() => {
+                      setActiveView('user');
+                      setShowDropdown(false);
+                    }}
+                    style={{ paddingVertical: 8, paddingHorizontal: 12 }}
+                  >
+                    <Text>{`${user?.firstName} ${user?.lastName}`} (Personlig vy)</Text>
+                  </TouchableOpacity>
+
+                  {user?.authorizedOrganizations?.map((org) => (
+                    <TouchableOpacity
+                      key={org.id}
+                      onPress={() => {
+                        setActiveView(org.id);
+                        setShowDropdown(false);
+                      }}
+                      style={{ paddingVertical: 8, paddingHorizontal: 12 }}
+                    >
+                      <Text>{org.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+
               <View style={styles.statusContainer}>
                 <Ionicons name="checkmark-circle" size={16} color={Colors.status.success} />
                 <Text style={styles.statusText}>Öppen för nya uppdrag</Text>
@@ -78,68 +117,6 @@ export default function ProfileScreen() {
         </View>
       </LinearGradient>
       
-      <View style={{ paddingHorizontal: 20, marginBottom: 20 }}>
-        <Text style={{ fontWeight: '600', fontSize: 16, color: Colors.text.heading, marginBottom: 8 }}>
-          Aktiv vy:
-        </Text>
-        <View style={{ backgroundColor: Colors.ui.white, borderRadius: 10, marginVertical: 10 }}>
-          <View style={{ marginVertical: 10 }}>
-            <TouchableOpacity
-              onPress={() => setShowDropdown(!showDropdown)}
-              style={{
-                padding: 12,
-                backgroundColor: Colors.ui.white,
-                borderRadius: 10,
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <Text style={{ fontSize: 16 }}>
-                {activeView === 'user'
-                  ? 'Personlig vy'
-                  : user?.createdOrganizations?.find((org) => org.id === activeView)?.name ?? 'Okänd vy'}
-              </Text>
-              <Text style={{ fontSize: 16 }}>▼</Text>
-            </TouchableOpacity>
-
-            {showDropdown && (
-              <View
-                style={{
-                  marginTop: 4,
-                  backgroundColor: Colors.ui.white,
-                  borderRadius: 10,
-                  paddingVertical: 8,
-                  elevation: 3,
-                }}
-              >
-                <TouchableOpacity
-                  onPress={() => {
-                    setActiveView('user');
-                    setShowDropdown(false);
-                  }}
-                  style={{ paddingVertical: 8, paddingHorizontal: 12 }}
-                >
-                  <Text>Personlig vy</Text>
-                </TouchableOpacity>
-
-                {user?.createdOrganizations?.map((org) => (
-                  <TouchableOpacity
-                    key={org.id}
-                    onPress={() => {
-                      setActiveView(org.id);
-                      setShowDropdown(false);
-                    }}
-                    style={{ paddingVertical: 8, paddingHorizontal: 12 }}
-                  >
-                    <Text>{org.name}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
-        </View>
-      </View>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {isOrganization ? (
           <>
