@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { hp, responsiveFontSize, responsiveSpacing, wp } from '@/utils/responsive';
 
 export default function AddScreen() {
-  const { createMission, user } = useAuth();
+  const { createMission, user, activeView } = useAuth();
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('Hjälp i hemmet');
   const [description, setDescription] = useState('');
@@ -104,6 +104,17 @@ export default function AddScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
+          <Text style={{
+            fontSize: 16,
+            fontWeight: '600',
+            marginBottom: 12,
+            color: Colors.text.body,
+          }}>
+            Skapar som:{' '}
+            {activeView === 'user'
+              ? `${user?.firstName} ${user?.lastName}`
+              : user?.authorizedOrganizations?.find(o => o.id === activeView)?.name ?? 'Okänd vy'}
+          </Text>
           {/* Form */}
           <View style={styles.formContainer}>
             {/* Category Dropdown */}

@@ -1,7 +1,7 @@
 console.log('🧠 AuthContext file loaded!');
+import { CreateMissionData, Mission, RegisterData, User } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { CreateMissionData, Mission, RegisterData, User } from '@/types';
 
 interface AuthContextType {
   // Auth state
@@ -42,7 +42,12 @@ const mockUsers: User[] = [
     createdOrganizations: [
       { id: 'org1', name: 'Rädda Barnen' },
       { id: 'org2', name: 'Naturskyddsföreningen' }
-    ]
+    ],
+    authorizedOrganizations: [ // ➕ Lägg till detta fält!
+      { id: 'org1', name: 'Rädda Barnen' },
+      { id: 'org2', name: 'Naturskyddsföreningen' },
+      { id: 'org3', name: 'UNICEF' } // även om användaren inte skapat den
+    ],
   },
 ];
 

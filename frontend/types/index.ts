@@ -11,6 +11,7 @@ export interface User {
   lastName: string;
   role: 'user';
   createdOrganizations?: SimpleOrganization[];
+  authorizedOrganizations?: SimpleOrganization[]; // 🔑 Behöriga
 }
 
 // Mission Types
