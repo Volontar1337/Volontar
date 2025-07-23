@@ -35,7 +35,10 @@ namespace WebAPI.Controllers
             {
                 UserId = user.Id,
                 Email = user.Email,
-                Token = token
+                Token = token,
+                FirstName = user.FirstName,    // <-- Lägg till
+                LastName = user.LastName,      // <-- Lägg till
+                Role = user.Role
             };
 
             return Ok(response);
@@ -60,15 +63,24 @@ namespace WebAPI.Controllers
         // ── EXEMPEL PÅ SKYDDAD ROUTE ──────────────────────────────────
         [HttpGet("me")]
         [Authorize]
-        public IActionResult GetMyProfile()
+        public async Task<IActionResult> GetMyProfile()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            if (userId == null)
+                return Unauthorized();
+
+            // Hämta user från databas via service (t.ex. med Guid)
+            var user = await _userService.GetUserByIdAsync(Guid.Parse(userId));
+            if (user == null)
+                return NotFound();
 
             return Ok(new
             {
-                UserId = userId,
-                Email = email
+                UserId = user.Id,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Role = user.Role
             });
         }
     }

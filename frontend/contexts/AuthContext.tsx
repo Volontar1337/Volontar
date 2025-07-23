@@ -119,19 +119,44 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // Mock login - check against mock users
-      const foundUser = mockUsers.find(u => u.email === email);
-      if (foundUser && password === 'password') { // Simple mock password
-        setUser(foundUser);
-        await AsyncStorage.setItem('user', JSON.stringify(foundUser));
+      const response = await fetch('http://192.168.0.30:5102/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Login response:', data); // <-- Här!
+        
+        const token = data.token;
+        const user: User = {
+          id: data.userId,
+          email: data.email,
+          firstName: data.firstName, // <-- HÄR!
+          lastName: data.lastName,   // <-- HÄR!
+          role: data.role,           // <-- HÄR!
+        };
+
+        await AsyncStorage.setItem('token', token);
+        await AsyncStorage.setItem('user', JSON.stringify(user));
+        setUser(user);
+
+        const savedToken = await AsyncStorage.getItem('token');
+        console.log('JWT-token sparad i AsyncStorage:', savedToken);
+
         return true;
+      } else {
+        const errorText = await response.text();
+        console.log('Login error:', errorText);
+        return false;
       }
-      return false;
     } catch (error) {
       console.error('Login error:', error);
       return false;
     }
   };
+
 
   const setActiveView = async (view: 'user' | string) => {
     try {
@@ -177,20 +202,58 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const createMission = async (missionData: CreateMissionData): Promise<boolean> => {
     try {
-      if (!user) return false;
-      
-      const newMission: Mission = {
-        id: Date.now().toString(),
-        ...missionData,
-        createdBy: user.id,
-        createdByName: `${user.firstName} ${user.lastName}`,
-        participants: [],
+      // 1. Hämta JWT-token från AsyncStorage
+      const token = await AsyncStorage.getItem('token');
+      if (!token) {
+        console.log('Ingen token funnen i AsyncStorage.');
+        return false;
+      }
+
+      // 2. Skapa StartTime och EndTime
+      const startTimeStr = `${missionData.date}T${missionData.time}:00`; // Ex: '2025-01-15T09:00:00'
+      const startTime = new Date(startTimeStr);
+
+      // Här kan du själv justera sluttiden (t.ex. +2 timmar)
+      const endTime = new Date(startTime);
+      endTime.setHours(endTime.getHours() + 2); // Default: 2 timmar senare
+
+      // 3. Sätt OrganizationId om aktiv vy är organisation
+      let organizationId: string | null = null;
+      if (activeView !== 'user') {
+        organizationId = activeView; // activeView = org-id om man skapar som organisation
+      }
+
+      // 4. Bygg payload enligt backend-DTO
+      const payload = {
+        title: missionData.title,
+        description: missionData.description,
+        location: missionData.location,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        organizationId: organizationId,
       };
-      
-      setMissions(prev => [...prev, newMission]);
-      return true;
+
+      // 5. Gör POST-anrop mot API:t på rätt IP och port
+      const response = await fetch('http://192.168.1.235:5102/api/missions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        // Ev. kan du hämta det skapade mission här: const createdMission = await response.json();
+        console.log('Uppdrag skapades!', await response.text());
+        return true;
+      } else {
+        const errorText = await response.text();
+        console.log(`Fel från backend: ${response.status} – ${errorText}`);
+        return false;
+      }
     } catch (error) {
-      console.error('Create mission error:', error);
+      console.log('Nätverksfel eller oväntat fel:', error);
       return false;
     }
   };

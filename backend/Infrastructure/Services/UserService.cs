@@ -96,5 +96,9 @@ namespace Infrastructure.Services
                 Token = token
             };
         }
+        public async Task<User?> GetUserByIdAsync(Guid id)
+        {
+            return await _context.Users.FindAsync(id);
+        }
     }
 }

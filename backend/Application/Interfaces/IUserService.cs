@@ -7,4 +7,5 @@ public interface IUserService
 {
     Task<User?> AuthenticateAsync(string email, string password);
     Task<RegisterResponseDto> RegisterUserAsync(RegisterUserRequestDto dto);
-}   
+    Task<User?> GetUserByIdAsync(Guid id); // <-- Nytt!
+}
