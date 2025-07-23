@@ -119,7 +119,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const response = await fetch('http://192.168.1.235:5102/api/auth/login', {
+      const response = await fetch('http://192.168.0.30:5102/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -127,10 +127,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       if (response.ok) {
         const data = await response.json();
-        const token = data.token;             // <-- såhär!
-        const user = {                        // <-- bygga eget user-objekt
+        console.log('Login response:', data); // <-- Här!
+        
+        const token = data.token;
+        const user: User = {
           id: data.userId,
           email: data.email,
+          firstName: data.firstName, // <-- HÄR!
+          lastName: data.lastName,   // <-- HÄR!
+          role: data.role,           // <-- HÄR!
         };
 
         await AsyncStorage.setItem('token', token);
@@ -151,6 +156,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return false;
     }
   };
+
 
   const setActiveView = async (view: 'user' | string) => {
     try {
